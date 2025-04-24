@@ -1,0 +1,215 @@
+coordinates:
+  daq_time:
+    long_name: Data Acquisition Time
+    description: Time of data acquisition with respect to the host computer clock.
+    units: nanoseconds since 1900-01-01
+
+  time:
+    long_name: Time
+    units: nanoseconds since 1900-01-01
+
+  a_wavelength:
+    long_name: Absorption Wavelength
+    description: Wavelength bins for the absorption (a) channel.
+    units: nm
+    dtype: float16
+    valid_range: [390, 755]
+
+  c_wavelength:
+    long_name: Attenuation Wavelength
+    description: Wavelength bins for the attenuation (c) channel.
+    units: nm
+    dtype: float16
+    valid_range: [390, 755]
+
+  wavelength:
+    long_name: Wavelength
+    description: Wavelength bins for the absorption (a) and attenuation (c) channels.
+    units: nm
+    dtype: float16
+    valid_range: [390, 755]
+
+variables:
+#---------- ACS Variables ----------#
+  a_signal:
+    long_name: Absorption Signal
+    description: Absorption (a) signal counts with size equivalent to the number of wavelengths in a_wavelength.
+    units: counts
+    dtype: int32
+
+  a_signal_dark:
+    long_name: Absorption Signal Dark
+    description: Absorption (a) signal dark counts.
+    units: counts
+    dtype: int32
+
+  a_reference:
+    long_name: Absorption Reference
+    description: Absorption (a) reference counts with size equivalent to the number of wavelengths in a_wavelength.
+    units: counts
+    dtype: int32
+
+  a_reference_dark:
+    long_name: Absorption Reference Dark
+    description: Absorption (a) reference dark counts.
+    units: counts
+    dtype: int32
+
+  c_signal:
+    long_name: Attenuation Signal
+    description: Attenuation (c) signal counts with size equivalent to the number of wavelengths in c_wavelength.
+    units: counts
+    dtype: int32
+
+  c_signal_dark:
+    long_name: Attenuation Signal Dark
+    description: Attenuation (c) signal dark counts.
+    units: counts
+    dtype: int32
+
+  c_reference:
+    long_name: Attenuation Reference
+    description: Attenuation (c) reference counts with size equivalent to the number of wavelengths in c_wavelength.
+    units: counts
+    dtype: int32
+
+  c_reference_dark:
+    long_name: Attenuation Reference Dark
+    description: Attenuation (c) reference dark counts.
+    units: counts
+    dtype: int32
+
+  elasped_time:
+    long_name: Elapsed Time
+    description: Elapsed time since the instrument was turned on, in milliseconds.
+    units: ms
+    dtype: int64
+
+  serial_number:
+    long_name: Serial Number
+    description: Serial number of the ACS instrument.
+    units: None
+    dtype: str
+
+  registration_bytes:
+    long_name: Registration Bytes
+    description: Registration bytes of an ACS instrument packet.
+    units: None
+    dtype: bytes
+
+  record_length:
+    long_name: Record Length
+    description: Record length of an ACS instrument packet.
+    units: None
+    dtype: int8
+
+  packet_type:
+    long_name: Packet Type
+    description: Packet type of an ACS instrument packet. Values over 3 indicate the packet is from an ACS instrument.
+    units: None
+    dtype: int8
+
+  serial_number_int:
+    long_name: Serial Number Integer
+    description: Serial number of the ACS instrument as an integer.
+    units: None
+    dtype: int64
+
+  serial_number_hexdec:
+    long_name: Serial Number Hexadecimal
+    description: Serial number of the ACS instrument as a hexadecimal string.
+    units: None
+    dtype: str
+
+  number_of_output_wavelengths:
+    long_name: Number of Output Wavelengths
+    description: Number of output wavelengths for the ACS instrument.
+    units: None
+    dtype: int8
+
+  raw_internal_temperature:
+    long_name: Raw Internal Temperature
+    description: Raw internal temperature of the ACS instrument.
+    units: counts
+    dtype: int64
+
+  raw_external_temperature:
+    long_name: Raw External Temperature
+    description: Raw external temperature of the ACS instrument.
+    units: counts
+    dtype: int64
+
+  raw_pressure:
+    long_name: Raw Pressure
+    description: Raw pressure from the ACS instrument. This value does not provide any data and can be safely discarded.
+    units: counts
+    dtype: int64
+
+  checksum:
+    long_name: Checksum
+    description: Checksum of an ACS instrument packet.
+    units: None
+    dtype: int32
+
+  internal_temperature:
+    long_name: Internal Temperature
+    description: Internal temperature of the ACS instrument in degrees Celsius.
+    units: Celsius
+    dtype: float32
+
+  external_temperature:
+    long_name: External Temperature
+    description: External temperature of the ACS instrument in degrees Celsius.
+    units: Celsius
+    dtype: float32
+
+  a_uncorrected:
+    long_name: Absorption Uncorrected
+    description: Absorption (a) uncorrected values effectively represent the total medium absorption, without correction for internal temperature variation.
+    units: m^-1
+    dtype: float32
+
+  c_uncorrected:
+    long_name: Attenuation Uncorrected
+    description: Attenuation (c) uncorrected values effectively represent the total medium attenuation, without correction for internal temperature variation.
+    units: m^-1
+    dtype: float32
+
+  discontinuity_wavelength_index:
+    long_name: Discontinuity Wavelength Index
+    description: Wavelength index of the discontinuity in the ACS instrument.
+    units: None
+    dtype: int8
+
+  a_discontinuity_offset:
+    long_name: Absorption Discontinuity Offset
+    description: Absorption (a) scalar discontinuity offset in m^-1.
+    units: m^-1
+    dtype: float32
+
+  c_discontinuity_offset:
+    long_name: Attenuation Discontinuity Offset
+    description: Attenuation (c) scalar discontinuity offset in m^-1.
+    units: m^-1
+    dtype: float32
+
+
+#---------- Non ACS Variables ----------#
+  sea_water_temperature:
+    long_name: Sea Water Temperature
+    description: Sea water temperature in degrees Celsius from a co-located CTD or thermosalinograph.
+    units: Celsius
+    dtype: float32
+
+  sea_water_practical_salinity:
+    long_name: Sea Water Practical Salinity
+    description: Sea water practical salinity in PSU from a co-located CTD or thermosalinograph. Practical salinity is a unit-less quantity calculated from the electrical conductivity of sea water and adjusted for temperature and pressure.
+    units: PSU
+    dtype: float32
+
+  sea_water_pressure:
+    long_name: Sea Water Pressure
+    description: Sea water pressure in decibars from a co-located CTD.
+    units: dbar
+    dtype: float32
+
