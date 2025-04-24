@@ -1,0 +1,38 @@
+[project]
+name = "acspype"
+version = "0.1.1"
+description = "A Python package for serial data acquisition and advanced processing for the Sea-Bird Scientific ACS."
+authors = [
+    {name = "Ian Black", email = "iantimothyblack@gmail.com"},
+]
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ['ACS', 'Sea-Bird Scientific', 'SBS']
+readme = "README.md"
+dependencies = [
+    "bottleneck",
+    "gsw",
+    "numpy",
+    "pandas",
+    "pyserial",
+    "requests",
+    "scipy",
+    "serial",
+    "xarray",
+]
+
+requires-python = ">=3.12"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Repository = 'https://github.com/IanTBlack/acspype'
+Issues = 'https://github.com/IanTBlack/acspype/issues'
+Discussion = 'https://github.com/IanTBlack/acspype/discussion'
+
+[tool.setuptools.packages.find]
+exclude = ["docs*","dev_tools*","examples*"]
