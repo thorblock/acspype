@@ -1,9 +1,11 @@
 from datetime import datetime
 import numpy as np
+import os
 import pandas as pd
 import re
 import requests
 from scipy import interpolate
+import shutil
 import xarray as xr
 
 def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
@@ -188,3 +190,24 @@ def get_ooi_optaa_cal(ds: xr.Dataset) -> object:
             dev = build_acpype_dev_obj(data, start)
             return dev
 
+def download_and_load_goldcopy(thredds_fileserver_url: str) -> xr.Dataset:
+    """
+    Download and load a dataset from the OOI THREDDS GoldCopy catalog.
+    Sometimes data accessed through the OpenDAP URL is incomplete, so downloading is recommended.
+
+    :param thredds_fileserver_url: A THREDDS GoldCopy URL. Must be fileServer, not dodsC.
+    :return: The xarray dataset.
+    """
+    filename = os.path.basename(thredds_fileserver_url)
+    if os.path.isfile(filename):
+        ds = xr.open_dataset(filename)
+        return ds
+    else:
+        with requests.get(thredds_fileserver_url, stream = True) as req:
+            with open(filename, 'wb') as fileobj:
+                shutil.copyfileobj(req.raw, fileobj)
+        if os.path.isfile(filename):
+            ds = xr.open_dataset(filename)
+            return ds
+        else:
+            return FileNotFoundError

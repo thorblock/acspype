@@ -40,3 +40,4 @@ def find_acs_port(baudrate: int = DefaultSerial.BAUDRATE,
         except:
             continue
     return ConnectionAbortedError('No ACS detected. Is the sensor connected and on?')
+

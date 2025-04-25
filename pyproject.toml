@@ -32,7 +32,7 @@ classifiers = [
 [project.urls]
 Repository = 'https://github.com/IanTBlack/acspype'
 Issues = 'https://github.com/IanTBlack/acspype/issues'
-Discussion = 'https://github.com/IanTBlack/acspype/discussion'
+Discussions = 'https://github.com/IanTBlack/acspype/discussions'
 
 [tool.setuptools.packages.find]
 exclude = ["docs*","dev_tools*","examples*"]

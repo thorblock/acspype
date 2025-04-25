@@ -169,8 +169,8 @@ def compute_external_temperature(counts: Union[int,xr.DataArray,np.array]) -> Un
     return external_temperature
 
 
-def compute_uncorrected(signal_counts: Union[list, np.array, xr.DataArray],
-                        reference_counts: Union[list, np.array, xr.DataArray],
+def compute_uncorrected(signal_counts: Union[tuple, np.array, xr.DataArray],
+                        reference_counts: Union[tuple, np.array, xr.DataArray],
                         dev: ACSDev) -> Union[np.array, xr.DataArray]:
     """
     Compute uncorrected absorption and attenuation from the sensor counts.

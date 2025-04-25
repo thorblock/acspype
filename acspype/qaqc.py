@@ -131,6 +131,16 @@ def internal_temperature_test(internal_temperature: Union[float, np.array, xr.Da
         flag = flag.where((min_t > internal_temperature) & (max_t < internal_temperature), FLAG.PASS)
         return flag
 
+def zero_reference_test(reference: xr.DataArray):
+    """
+    Assess if any reference counts are zero. The computation for uncorrected absorption and attenuation will fail if zero is in the reference (denominator in a ln).
+    :param reference: Reference counts from the ACS.
+    :return:
+    """
+
+    flag = xr.full_like(reference.time.astype(int), FLAG.PASS).astype(int)
+    flag = flag.where(~np.any(reference == 0,axis = 1), FLAG.FAIL)
+    return flag
 
 def inf_nan_test(uncorr: Union[tuple, xr.DataArray]):
     """
@@ -219,3 +229,5 @@ def a_gt_c_test(absorption: xr.DataArray, attenuation: xr.DataArray) -> xr.DataA
     flag = flag.where(absorption > attenuation, FLAG.FAIL)
     flag = flag.where(absorption <= attenuation, FLAG.PASS)
     return flag
+
+
