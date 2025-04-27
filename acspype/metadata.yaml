@@ -36,54 +36,64 @@ variables:
     description: Absorption (a) signal counts with size equivalent to the number of wavelengths in a_wavelength.
     units: counts
     dtype: int32
+    valid_range: [0, 65535]
 
   a_signal_dark:
     long_name: Absorption Signal Dark
     description: Absorption (a) signal dark counts.
     units: counts
     dtype: int32
+    valid_range: [0, 65535]
 
   a_reference:
     long_name: Absorption Reference
     description: Absorption (a) reference counts with size equivalent to the number of wavelengths in a_wavelength.
     units: counts
     dtype: int32
+    valid_range: [0, 65535]
 
   a_reference_dark:
     long_name: Absorption Reference Dark
     description: Absorption (a) reference dark counts.
     units: counts
     dtype: int32
+    valid_range: [0, 65535]
 
   c_signal:
     long_name: Attenuation Signal
     description: Attenuation (c) signal counts with size equivalent to the number of wavelengths in c_wavelength.
     units: counts
     dtype: int32
+    valid_range: [0, 65535]
 
   c_signal_dark:
     long_name: Attenuation Signal Dark
     description: Attenuation (c) signal dark counts.
     units: counts
     dtype: int32
+    valid_range: [0, 65535]
 
   c_reference:
     long_name: Attenuation Reference
     description: Attenuation (c) reference counts with size equivalent to the number of wavelengths in c_wavelength.
     units: counts
     dtype: int32
+    valid_range: [0, 65535]
 
   c_reference_dark:
     long_name: Attenuation Reference Dark
     description: Attenuation (c) reference dark counts.
     units: counts
     dtype: int32
+    valid_range: [0, 65535]
 
   elasped_time:
     long_name: Elapsed Time
     description: Elapsed time since the instrument was turned on, in milliseconds.
     units: ms
     dtype: int64
+    valid_range: [0, 9223372036854775807]
+
 
   serial_number:
     long_name: Serial Number
@@ -131,19 +141,21 @@ variables:
     long_name: Raw Internal Temperature
     description: Raw internal temperature of the ACS instrument.
     units: counts
-    dtype: int64
+    dtype: int32
+    valid_range: [0, 65535]
 
   raw_external_temperature:
     long_name: Raw External Temperature
     description: Raw external temperature of the ACS instrument.
     units: counts
-    dtype: int64
+    dtype: int32
+    valid_range: [0, 65535]
 
   raw_pressure:
     long_name: Raw Pressure
     description: Raw pressure from the ACS instrument. This value does not provide any data and can be safely discarded.
     units: counts
-    dtype: int64
+    dtype: int8
 
   checksum:
     long_name: Checksum
@@ -192,6 +204,37 @@ variables:
     description: Attenuation (c) scalar discontinuity offset in m^-1.
     units: m^-1
     dtype: float32
+
+  a_m_discontinuity:
+    long_name: Measured Absorption Without Discontinuity Correction
+    description: Absorption (a) measured values without discontinuity correction.
+    units: m^-1
+    dtype: float32
+
+  c_m_discontinuity:
+    long_name: Measured Attenuation Without Discontinuity Correction
+    description: Attenuation (c) measured values without discontinuity correction.
+    units: m^-1
+    dtype: float32
+
+  a_m:
+    long_name: Measured Absorption, may represent the combined effects of particles and gelbstoff, just particles, or just gelbstoff.
+    description: Absorption (a) measured values with discontinuity correction, but not corrected for temperature and salinity.
+    units: m^-1
+    dtype: float32
+
+  c_m:
+    long_name: Measured Attenuation, may represent the combined effects of particles and gelbstoff, just particles, or just gelbstoff.
+    description: Attenuation (c) measured values with discontinuity correction, but not corrected for temperature and salinity.
+    units: m^-1
+    dtype: float32
+
+  a_mts:
+    long_name: Measured Absorption Corrected for Temperature and Salinity
+    description: Absorption (a) measured values with discontinuity correction and corrected for temperature and salinity.
+    units: m^-1
+    dtype: float32
+
 
 
 #---------- Non ACS Variables ----------#

@@ -1,12 +1,14 @@
 import numpy as np
+from numpy.typing import ArrayLike
 from scipy.interpolate import CubicSpline
-from typing import Union
+from typing import Union, Tuple
 import xarray as xr
 
 
-def find_discontinuity_index(a_wavelengths: Union[list,tuple, np.array, xr.DataArray],
-                             c_wavelengths: Union[list,tuple, np.array, xr.DataArray],
-                             min_band: int = 535, max_band: int = 600) -> int:
+def find_discontinuity_index(a_wavelengths: ArrayLike,
+                             c_wavelengths: ArrayLike,
+                             min_band: float = 535.0,
+                             max_band: float = 600.0) -> int:
     """
 
     This code is modified from the OPTAA processing utilities in the ooi-data-explorations repo.
@@ -34,15 +36,16 @@ def find_discontinuity_index(a_wavelengths: Union[list,tuple, np.array, xr.DataA
 
 
 
-def _compute_discontinuity_offset(values: Union[list, tuple, np.array],
-                                  wavelength: Union[list, tuple, np.array],
+def _compute_discontinuity_offset(values: ArrayLike,
+                                  wavelength: ArrayLike,
                                   didx: int) -> float:
     """
     This code is modified from the OPTAA processing utilities in the ooi-data-explorations repo.
     https://github.com/IanTBlack/ooi-data-explorations/blob/master/python/ooi_data_explorations/uncabled/utilities/utilities_optaa.py#L212
 
     Compute the scalar discontinuity offset to be applied to the second half of an ACS spectra.
-    NOTE: If the input values contain an inf value, the function will return -999. This is to prevent math errors associated with creating a cubic spline on infinite values.
+    NOTE: If the input values contain an inf or NaN value, this function will return a NaN.
+    This is to prevent math errors associated with creating a cubic spline on infinite values.
     Spectra with infinite values should be removed at some point in the processing pipeline.
 
     :param values: The incoming absorption or attenuation values. It is highly recommended that these values be
@@ -61,7 +64,7 @@ def _compute_discontinuity_offset(values: Union[list, tuple, np.array],
     y = _values[_didx - 2:_didx + 1]
 
     if np.any(np.isinf(y)) or np.any(np.isnan(y)):
-        return -999
+        return np.nan
     else:
         cubic_spline = CubicSpline(x, y)
         interp = cubic_spline(_wavelength[_didx + 1], extrapolate=True)
@@ -69,7 +72,7 @@ def _compute_discontinuity_offset(values: Union[list, tuple, np.array],
         return offset
 
 
-def _apply_discontinuity_offset(values: Union[list, tuple, np.array],
+def _apply_discontinuity_offset(values: ArrayLike,
                                 offset: float,
                                 didx: int) -> np.array:
 
@@ -92,7 +95,9 @@ def _apply_discontinuity_offset(values: Union[list, tuple, np.array],
     return _values
 
 
-def compute_discontinuity_offset(measured, wavelength_dim, discontinuity_index):
+def compute_discontinuity_offset(measured: xr.DataArray,
+                                 wavelength_dim: str,
+                                 discontinuity_index: int) -> xr.DataArray:
     """
     This is a wrapper function for _compute_discontinuity_offset that is vectorized for Xarray.
 
@@ -110,7 +115,10 @@ def compute_discontinuity_offset(measured, wavelength_dim, discontinuity_index):
     return offset
 
 
-def apply_discontinuity_offset(measured, offset, wavelength_dim, discontinuity_index):
+def apply_discontinuity_offset(measured: xr.DataArray,
+                               offset: xr.DataArray,
+                               wavelength_dim: str,
+                               discontinuity_index: int) -> xr.DataArray:
     """
     This is a wrapper function for _apply_discontinuity_offset that is vectorized for Xarray.
     :param measured: The measured values.
@@ -128,9 +136,12 @@ def apply_discontinuity_offset(measured, offset, wavelength_dim, discontinuity_i
     return dc
 
 
-def discontinuity_correction(measured, wavelength_dim, discontinuity_index):
+def discontinuity_correction(measured: xr.DataArray,
+                             wavelength_dim: str,
+                             discontinuity_index: int) -> Tuple[xr.DataArray, xr.DataArray]:
     """
     This is a convenience function for computing the discontinuity offset and applying it to the measured values in Xarray.
+
     :param measured: The measured values.
     :param wavelength_dim: The wavelength dimension to apply the correction to.
     :param discontinuity_index: The index of discontinuity.
@@ -139,4 +150,4 @@ def discontinuity_correction(measured, wavelength_dim, discontinuity_index):
 
     offset = compute_discontinuity_offset(measured, wavelength_dim, discontinuity_index)
     dc = apply_discontinuity_offset(measured, offset, wavelength_dim, discontinuity_index)
-    return dc, offset
+    return (dc, offset)

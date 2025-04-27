@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.typing import ArrayLike
 from struct import unpack_from
 from typing import Union, Tuple
 import xarray as xr
@@ -10,8 +11,6 @@ from acspype.structures import ACSPacket, ParsedPacket, CalibratedPacket
 from acspype.qaqc import FLAG, internal_temperature_test, syntax_test, elapsed_time_test
 from acspype.discontinuity import (find_discontinuity_index, _apply_discontinuity_offset,
                                    _compute_discontinuity_offset, discontinuity_correction)
-
-
 
 def parse_packet(acs_packet: ACSPacket,
                  run_syntax_test: bool = True,
@@ -40,7 +39,7 @@ def parse_packet(acs_packet: ACSPacket,
         checksum = checksum[0]
     raw = unpack_from(full_packet_descriptor, full_packet)  # Note: The padbyte is not returned when unpacking.
 
-    # Split and process the raw data.
+    # Split the raw data.
     reg_bytes = raw[:LPR]
     record_length = raw[LPR + 0]
     packet_type = raw[LPR + 1]

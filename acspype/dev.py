@@ -13,7 +13,7 @@ class ACSDev:
     multiple file datasets.
 
     Generally, users will not call individual functions, but rather use the class to obtain attributes, which are
-    created at class instantiation or convert the data to an xarray dataset using the to_xarray function.
+    created at class instantiation or convert the data to an xr.Dataset using the to_xarray function.
     """
 
     def __init__(self, filepath: str) -> None:

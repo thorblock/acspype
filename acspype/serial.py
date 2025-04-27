@@ -4,12 +4,12 @@ import serial
 from acspype.core import PACKET_REGISTRATION, DefaultSerial
 from acspype.structures import ACSPacket
 
-class ACSStream():
+class ACSSerial():
     def __init__(self, port: str,
                  baudrate: int = DefaultSerial.BAUDRATE,
                  timeout: float = DefaultSerial.TIMEOUT) -> None:
         """
-        Instantiate the ACSStream class, reset the serial port, and clear any data in memory.
+        Instantiate the ACSSerial class, reset the serial port, and clear any data in memory.
 
         :param port: The COM port the ACS is connected to.
         :param baudrate: The baudrate of the ACS. All ACS sensors come from the factory set to 115200 bps.

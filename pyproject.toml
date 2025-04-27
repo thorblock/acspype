@@ -1,6 +1,6 @@
 [project]
 name = "acspype"
-version = "0.1.2"
+version = "0.1.3"
 description = "A Python package for serial data acquisition and advanced processing for the Sea-Bird Scientific ACS."
 authors = [
     {name = "Ian Black", email = "iantimothyblack@gmail.com"},
@@ -21,12 +21,15 @@ dependencies = [
     "xarray",
 ]
 
-requires-python = ">=3.12"
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.9",
 ]
 
 [project.urls]
@@ -35,4 +38,4 @@ Issues = 'https://github.com/IanTBlack/acspype/issues'
 Discussions = 'https://github.com/IanTBlack/acspype/discussions'
 
 [tool.setuptools.packages.find]
-exclude = ["docs*","dev_tools*","examples*"]
+exclude = ["docs*","examples/*.nc"]
