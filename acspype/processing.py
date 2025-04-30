@@ -348,7 +348,9 @@ def zero_shift_correction(mts: NDArray[float] | xr.DataArray) -> NDArray[float] 
     return mts
 
 
-def interpolate_common_wavelengths(ds: xr.Dataset, a_wavelength_dim: str, c_wavelength_dim: str,
+def interpolate_common_wavelengths(ds: xr.Dataset,
+                                   a_wavelength_dim: str = 'a_wavelength',
+                                   c_wavelength_dim: str = 'c_wavelength',
                                    new_wavelength_dim: str = 'wavelength',
                                    wavelength_range: list or str = 'infer', step: int = 1,) -> xr.Dataset:
     """
@@ -375,6 +377,7 @@ def interpolate_common_wavelengths(ds: xr.Dataset, a_wavelength_dim: str, c_wave
                            c_wavelength_dim], drop=True).assign_coords(wavelength=wvls).rename(
         {a_wavelength_dim: new_wavelength_dim,
          c_wavelength_dim: new_wavelength_dim})
+
     cds.attrs['interpolation_step'] = step
     return cds
 

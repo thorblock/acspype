@@ -5,7 +5,16 @@ Some of the target audiences for this package include technicians looking to int
 ACS data are inherently complex and difficult to work with, particularly for new users without strong optics backgrounds that desire to use the data for empirically derived data products like chlorophyll-a and particulate organic carbon.
 This package attempts to simplify the process of ingesting and processing ACS data so that users can more quickly get to the science application in their research.
 
-## CAUTION
+
+## Installation
+This package is available on the [Python Package Index (PyPI)](https://pypi.org/project/acspype/) and can be installed via pip:
+
+`pip install acspype`
+
+<br>
+<br>
+
+## **CAUTION**
 ### Equipment
 If you are using this package to acquire data from an ACS over serial, it is your responsibility to ensure that you are 
 using the appropriate equipment (power supply, cable, etc.). Please consult Sea-Bird Scientific for more information about the relevant equipment and
@@ -15,18 +24,21 @@ If looking for a USB-to-RS232 adapter, the [FTDI US232R-100-BULK](https://ftdich
 
 
 ### Serial Processing Limitations
-Not all processing steps offered in acspype can be done in the same thread as the serial data acquisition. 
+Not all processing steps offered in acspype can be done in the same thread as the serial data acquisition, particularly the latter processing stages that use Xarray to handle wavelength indexes. 
 Some steps require linear and cubic interpolation, which may take too much time to perform in between packets. 
 Processing up through the temperature-salinity corrected absorption (a_mts) and attenuation (c_mts) can typically be done in the same thread in real-time, but requires accessing ancillary data from another source.
 If ancillary data is not immediately available, then processing up through measured absorption (a_m) and attenuation (c_m) is more appropriate.
 
-## Installation
-This package is available on the [Python Package Index (PyPI)](https://pypi.org/project/acspype/) and can be installed via pip:
-
-`pip install acspype`
 
 ## Additional Information
-Additional information about the ACS, the manuals referenced in construction in this package, and the recommended processing and QAQC test can be found in the [info](link here) folder of the GitHub repository.
+Additional information about the ACS, the manuals referenced in construction in this package, and the recommended processing and QAQC test can be found in the [info](https://github.com/IanTBlack/acspype/tree/main/info) directory of the GitHub repository.
+
+### Processing Steps and QAQC
+Recommended processing steps and QAQC tests are described in [PROCESSING.md](https://github.com/IanTBlack/acspype/blob/main/info/PROCESSING.md) document.
+
+### Naming Conventions
+Although *acspype* tries not enforce strict naming conventions for coordinates, dimensions, and variables, it is strongly recommended that users follow the naming conventions in [NAMING_CONVENTIONS.md](https://github.com/IanTBlack/acspype/blob/main/info/NAMING_CONVENTIONS.md).
+The names put forth in this document attempt to combine [CF Guidelines](https://cfconventions.org/Data/cf-standard-names/docs/guidelines.html) and conventions commonly used in literature that utilizes ACS data.
 
 
 ## Issues, Discussions, and Contributions
@@ -55,10 +67,6 @@ For application where concurrency is required, PostgreSQL is a good option. It p
 The ACS produces a significant amount of data, so logging to text (.txt, .csv) or netCDF (.nc) files may best be done as hourly or daily files to prevent excessive memory usage.
 
 This package does not remove data at any processing stage. In some processing stages, data may be returned as NaN, which is an expected behaviour for poor quality data. For example, if the reference counts for absorption or attenuation are zero, the uncorrected absorption or attenuation at that wavelength bin will become Inf or NaN, because a division by zero occurs within the log calculation. Instances of NaN or Inf should be treated as suspect quality data and be further inspected by the user.
-
-## Naming Conventions
-Although *acspype* tries not enforce strict naming conventions for coordinates, dimensions, and variables, it is strongly recommended that users follow the naming conventions in [NAMING_CONVENTIONS.md](link here).
-The names put forth in this document are [CF Guideline](https://cfconventions.org/Data/cf-standard-names/docs/guidelines.html) compliant and also follow conventions commonly used in literature.
 
 
 

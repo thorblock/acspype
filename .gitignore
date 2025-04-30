@@ -163,6 +163,7 @@ cython_debug/
 examples/ooi_data/
 examples/*.nc
 examples/scratch.ipynb
+dev_tools/test_files/EXAMPLE_SHIMADA_202405.nc
 *.png
 *.jpg
 *.tif

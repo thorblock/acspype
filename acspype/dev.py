@@ -58,7 +58,7 @@ class ACSDev:
                 self.sensor_type = re.findall('(.*?)\n', line)[0]
             elif 'Serial' in line:
                 self.sn_hexdec = re.findall('(.*?)\t', line)[0]
-                self.sn = 'ACS-' + str(int(self.sn_hexdec[-6:], 16)).zfill(5)  # Convert to sn shown on product sticker.
+                self.serial_number = 'ACS-' + str(int(self.sn_hexdec[-6:], 16)).zfill(5)
             elif 'structure version' in line:
                 self.structure_version = int(re.findall(f'({NUM_PAT})\t', line)[0])
             elif 'tcal' in line or 'Tcal' in line:
@@ -209,7 +209,7 @@ class ACSDev:
         ds.attrs['device_filepath'] = self._filepath
         ds.attrs['sensor_type'] = self.sensor_type
         ds.attrs['serial_number_hexdec'] = self.sn_hexdec
-        ds.attrs['serial_number'] = self.sn
+        ds.attrs['serial_number'] = self.serial_number
         ds.attrs['device_file_structure_version'] = self.structure_version
         ds.attrs['tcal'] = self.tcal
         ds.attrs['ical'] = self.ical
