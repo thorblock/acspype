@@ -69,7 +69,7 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/_build/
+info/docs/_build/
 
 # PyBuilder
 .pybuilder/
@@ -160,11 +160,11 @@ cython_debug/
 .idea/
 
 # Custom
+examples/ooi_data/
 examples/*.nc
-old/uv.lock
-acspype.egg-info/
-dist/
-ooi_data/
+examples/scratch.ipynb
 *.png
 *.jpg
 *.tif
+dist/
+

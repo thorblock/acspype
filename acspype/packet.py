@@ -101,7 +101,7 @@ def calibrate_packet(parsed_packet: ParsedPacket, dev: ACSDev) -> DeviceCalibrat
         a_wavelength = dev.a_wavelength,
         c_wavelength = dev.c_wavelength,
         sn_hexdec = convert_sn_hexdec(parsed_packet.sn_int),
-        sn_str = convert_sn_str(parsed_packet.sn_int),
+        serial_number = convert_sn_str(parsed_packet.sn_int),
         internal_temperature= internal_temperature,
         external_temperature= external_temperature,
         a_uncorrected= a_uncorrected,
@@ -125,11 +125,11 @@ def ts_correct_packet(device_calibrated_packet: DeviceCalibratedPacket,
     tscor = ACSTSCor().to_xarray()
     psi_s_a = tscor.psi_s_a.sel(wavelength=np.array(device_calibrated_packet.a_wavelength), method='nearest')
     psi_t = tscor.psi_t.sel(wavelength=np.array(device_calibrated_packet.a_wavelength), method='nearest')
-    a_mts = ts_correction(device_calibrated_packet.a_m, temperature, salinity, psi_t, psi_s_a, dev.tcal)
+    a_mts = ts_correction(device_calibrated_packet.a_m, temperature, salinity, psi_t.values, psi_s_a.values, dev.tcal)
 
     psi_s_c = tscor.psi_s_c.sel(wavelength=np.array(device_calibrated_packet.c_wavelength), method='nearest')
     psi_t = tscor.psi_t.sel(wavelength=np.array(device_calibrated_packet.c_wavelength), method='nearest')
-    c_mts = ts_correction(device_calibrated_packet.c_m, temperature, salinity, psi_t, psi_s_c, dev.tcal)
+    c_mts = ts_correction(device_calibrated_packet.c_m, temperature, salinity, psi_t.values, psi_s_c.values, dev.tcal)
 
     a_mts = zero_shift_correction(a_mts)  # Zero shift correction is applied to the a_mts values.
     c_mts = zero_shift_correction(c_mts)

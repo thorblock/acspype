@@ -1,3 +1,9 @@
+"""
+This module contains NamedTuple structures that ACS data can be dumped into for easy tracking and exporting.
+Each NamedTuple is assigned methods that allows for the export of data to a dictionary or to a formatted
+xarray.Dataset.
+"""
+
 from datetime import datetime
 import numpy as np
 from numpy.typing import ArrayLike
@@ -43,9 +49,11 @@ class ParsedPacket(NamedTuple):
     a_signal: tuple[int, ...]
     checksum: int
 
+
     def to_dict(self) -> dict:
         """Export the ParsedPacket as a dictionary."""
         return self._asdict()
+
 
     def to_xarray(self) -> xr.Dataset:
         """Export the ParsedPacket as an xr.Dataset."""
@@ -79,7 +87,7 @@ class DeviceCalibratedPacket(NamedTuple):
     a_wavelength: tuple[float, ...]
     c_wavelength: tuple[float, ...]
     sn_hexdec: str
-    sn_str: str
+    serial_number: str
     internal_temperature: float
     external_temperature: float
     a_uncorrected: ArrayLike
@@ -92,8 +100,10 @@ class DeviceCalibratedPacket(NamedTuple):
     a_m: ArrayLike
     c_m: ArrayLike
 
+
     def to_dict(self) -> dict:
         return self._asdict()
+
 
     def to_xarray(self) -> xr.Dataset:
         ds = xr.Dataset()
@@ -101,7 +111,7 @@ class DeviceCalibratedPacket(NamedTuple):
                                'a_wavelength': np.array(self.a_wavelength),
                                'c_wavelength': np.array(self.c_wavelength)})
         ds['sn_hexdec'] = self.sn_hexdec
-        ds['sn_str'] = self.sn_str
+        ds['serial_number'] = self.serial_number
         ds['internal_temperature'] = self.internal_temperature
         ds['external_temperature'] = self.external_temperature
         ds['a_uncorrected'] = (['daq_time', 'a_wavelength'], [self.a_uncorrected])

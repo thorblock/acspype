@@ -17,8 +17,6 @@ from numpy.typing import NDArray
 from scipy.interpolate import CubicSpline
 import xarray as xr
 
-from acspype import ACSDev, ACSTSCor
-
 
 def _convert_sn_hexdec(sn_int: int) -> str:
     """
@@ -31,6 +29,7 @@ def _convert_sn_hexdec(sn_int: int) -> str:
 
     sn_hexdec = hex(sn_int)
     return sn_hexdec
+
 
 def convert_sn_hexdec(sn_int: int | xr.DataArray) -> str | xr.DataArray:
     """
@@ -48,7 +47,6 @@ def convert_sn_hexdec(sn_int: int | xr.DataArray) -> str | xr.DataArray:
                                    output_core_dims=[[]],
                                    vectorize=True)
         return sn_hexdec
-
 
 
 def _convert_sn_str(sn_int: int) -> str:
@@ -130,7 +128,8 @@ def compute_uncorrected(signal_counts: tuple[int, ...] | NDArray[float] | xr.Dat
 
     :param signal_counts: The absorption or attenuation channel signal counts.
     :param reference_counts: The absorption or attenuation channel reference counts.
-    :param path_length: The path length of the ACS in meters. Default is 0.25m, but it is recommended to use the path length in the device file.
+    :param path_length: The path length of the ACS in meters. Default is 0.25m, but it is recommended to use the path
+        length in the device file.
     :return: Uncorrected absorption or attenuation coefficient in m^-1.
     """
 
@@ -139,6 +138,13 @@ def compute_uncorrected(signal_counts: tuple[int, ...] | NDArray[float] | xr.Dat
         reference_counts = np.array(reference_counts)
     uncorr = (1 / path_length) * np.log(signal_counts / reference_counts)
     return uncorr
+
+def compute_total(uncorrected: NDArray[float] | xr.DataArray, internal_temperature: float | xr.DataArray, func_delta_t: Callable) -> NDArray[float] | xr.DataArray:
+    if not isinstance(uncorrected, xr.DataArray):
+        total = uncorrected - func_delta_t(internal_temperature)
+    else:
+        total = uncorrected - func_delta_t(internal_temperature).T
+    return total
 
 
 def compute_measured(uncorrected: NDArray[float] | xr.DataArray,
@@ -149,13 +155,15 @@ def compute_measured(uncorrected: NDArray[float] | xr.DataArray,
     """
     Compute the measured absorption or attenuation coefficient from the uncorrected coefficient and the internal temperature.
 
-    :param uncorrected: The uncorrected absorption or attenuation coefficient. Typically computed via compute_uncorrected().
-    :param internal_temperature: The internal temperature of the ACS in degrees Celsius. Typically computed via compute_internal_temperature().
+    :param uncorrected: The uncorrected absorption or attenuation coefficient.
+        Typically computed via compute_uncorrected().
+    :param internal_temperature: The internal temperature of the ACS in degrees Celsius.
+        Typically computed via compute_internal_temperature().
     :param offset: The coefficient offset from the device file.
-    :param func_delta_t: The interpolation function for correcting for internal temperature variation. This function is built by default when using an ACSDev object.
+    :param func_delta_t: The interpolation function for correcting for internal temperature variation.
+        This function is built by default when using an ACSDev object.
     :return: Measured absorption or attenuation coefficient in m^-1, corrected for internal temperature variation.
     """
-
 
     if not isinstance(uncorrected, xr.DataArray):
         measured = (offset - uncorrected) - func_delta_t(internal_temperature)
@@ -164,8 +172,8 @@ def compute_measured(uncorrected: NDArray[float] | xr.DataArray,
     return measured
 
 
-def find_discontinuity_index(a_wavelengths: NDArray[float],
-                             c_wavelengths: NDArray[float],
+def find_discontinuity_index(a_wavelength: NDArray[float],
+                             c_wavelength: NDArray[float],
                              min_wvl: float = 535.0, max_wvl: float = 600.0) -> int:
     """
     Find the wavelength index of the discontinuity in the absorption and attenuation spectra. The discontinuity is
@@ -178,9 +186,9 @@ def find_discontinuity_index(a_wavelengths: NDArray[float],
     :return: The index of the discontinuity in the absorption and attenuation spectra.
     """
 
-    a_wvls = np.where((a_wavelengths < min_wvl) | (a_wavelengths > max_wvl), np.nan, a_wavelengths)
-    c_wvls = np.where((c_wavelengths < min_wvl) | (c_wavelengths > max_wvl), np.nan, c_wavelengths)
-    discontinuity_index = int(np.nanargmin(np.diff(a_wvls) + np.diff(c_wvls)))
+    a_wvl = np.where((a_wavelength < min_wvl) | (a_wavelength > max_wvl), np.nan, a_wavelength)
+    c_wvl = np.where((c_wavelength < min_wvl) | (c_wavelength > max_wvl), np.nan, c_wavelength)
+    discontinuity_index = int(np.nanargmin(np.diff(a_wvl) + np.diff(c_wvl)))
     return discontinuity_index
 
 
@@ -203,7 +211,7 @@ def _compute_discontinuity_offset(measured: NDArray[float],
     else:
         cubic_spline = CubicSpline(x, y)
         interp = cubic_spline(wavelength[disc_idx + 1], extrapolate=True)
-        offset = round(interp - measured[disc_idx + 1],4)
+        offset = round(interp - measured[disc_idx + 1],5)
         return offset
 
 
@@ -249,7 +257,6 @@ def _apply_discontinuity_offset(measured: NDArray[float],
     return _measured
 
 
-
 def apply_discontinuity_offset(measured, disc_off, disc_idx, wavelength_dim):
     """
     Apply a discontinuity offset to a measured coefficient. Vectorized version of _apply_discontinuity_offset, where
@@ -270,7 +277,6 @@ def apply_discontinuity_offset(measured, disc_off, disc_idx, wavelength_dim):
                             output_core_dims = [[wavelength_dim]],
                             vectorize = True)
     return disc_applied
-
 
 
 def discontinuity_correction(measured: xr.DataArray,
@@ -313,9 +319,17 @@ def ts_correction(measured: NDArray[float] | xr.DataArray,
     :return: TS-corrected absorption or attenuation coefficient in m^-1.
     """
 
-    dT, psi_t = np.meshgrid(temperature - tcal, psi_temperature)
-    s, psi_s = np.meshgrid(salinity, psi_salinity)
-    mts = measured - ((psi_t.T * dT.T) + (psi_s.T * s.T))
+
+    if not isinstance(measured, xr.DataArray):
+        dT = temperature - tcal
+        psi_t = psi_temperature
+        psi_s = psi_salinity
+        s = salinity
+        mts = measured - ((psi_t * dT) + (psi_s * s))
+    else:
+        dT, psi_t = np.meshgrid(temperature - tcal, psi_temperature)
+        s, psi_s = np.meshgrid(salinity, psi_salinity)
+        mts = measured - ((psi_t.T * dT.T) + (psi_s.T * s.T))
     return mts
 
 
@@ -334,12 +348,13 @@ def zero_shift_correction(mts: NDArray[float] | xr.DataArray) -> NDArray[float] 
     return mts
 
 
-
 def interpolate_common_wavelengths(ds: xr.Dataset, a_wavelength_dim: str, c_wavelength_dim: str,
+                                   new_wavelength_dim: str = 'wavelength',
                                    wavelength_range: list or str = 'infer', step: int = 1,) -> xr.Dataset:
     """
     This function interpolates the absorption and attenuation spectra to a common wavelength range and step size.
-    Only works on xarray Datasets. Applies interpolation to all variables on the a_wavelength and c_wavelength dimensions.
+    Only works on xarray Datasets.
+    Applies interpolation to all variables on the a_wavelength and c_wavelength dimensions.
 
     :param ds:
     :param a_wavelength_dim:
@@ -348,17 +363,18 @@ def interpolate_common_wavelengths(ds: xr.Dataset, a_wavelength_dim: str, c_wave
     :param step:
     :return:
     """
+
     if wavelength_range == 'infer':
-        min_wvl = np.ceil(max(ds[a_wavelength_dim].min(), ds[c_wavelength_dim].min())) # Maximum of a and c wavelength minimums.
-        max_wvl = np.floor(min(ds[a_wavelength_dim].max(), ds[c_wavelength_dim].max())) # Minimum of a and c wavelength maximums.
+        min_wvl = np.ceil(max(ds[a_wavelength_dim].min(), ds[c_wavelength_dim].min())) # Max of a and c wvl mins.
+        max_wvl = np.floor(min(ds[a_wavelength_dim].max(), ds[c_wavelength_dim].max())) # Min of a and c wvl maxs.
     else:
         min_wvl, max_wvl = wavelength_range
     wvls = np.arange(min_wvl, max_wvl, step)
     cds = ds.interp({a_wavelength_dim: wvls, c_wavelength_dim: wvls})  # Interpolate to step size.
     cds = cds.reset_index([a_wavelength_dim,
                            c_wavelength_dim], drop=True).assign_coords(wavelength=wvls).rename(
-        {a_wavelength_dim: 'wavelength',
-         c_wavelength_dim: 'wavelength'})
+        {a_wavelength_dim: new_wavelength_dim,
+         c_wavelength_dim: new_wavelength_dim})
     cds.attrs['interpolation_step'] = step
     return cds
 
@@ -378,7 +394,7 @@ def _determine_reference_wavelength_index(spectra):
 def estimate_reference_wavelength(a_mts: xr.DataArray, wavelength_dim: str) -> float:
     wvl_idxs = xr.apply_ufunc(_determine_reference_wavelength_index,
                               a_mts,
-                              input_core_dims=[['wavelength']],
+                              input_core_dims=[[wavelength_dim]],
                               vectorize=True)
     idxs, counts = np.unique(wvl_idxs, return_counts = True)
     wvl_idx = idxs[np.nanargmax(counts)]

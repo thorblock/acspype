@@ -1,6 +1,5 @@
 import xarray as xr
 
-
 def compute_chl_alh(a_p_650: xr.DataArray,
                     a_p_676: xr.DataArray,
                     a_p_715: xr.DataArray,

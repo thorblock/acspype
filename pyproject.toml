@@ -11,7 +11,7 @@ keywords = ['ACS', 'Sea-Bird Scientific', 'SBS','oceanography']
 readme = "README.md"
 dependencies = [
     "bottleneck",
-    "gsw",
+    "netCDF4",
     "numpy",
     "pandas",
     "pyserial",
@@ -23,19 +23,36 @@ dependencies = [
 
 requires-python = ">=3.9"
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering",
-    "Programming Language :: Python :: 3.19",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
 
+
+
+[project.optional-dependencies]
+dev = [
+    "fsspec",
+    "gsw",
+    "jupyter",
+    "ipykernel",
+    "ipympl",
+    "matplotlib",
+    "pytest",
+    "uv"]
+
+
+
 [project.urls]
 Repository = 'https://github.com/IanTBlack/acspype'
 Issues = 'https://github.com/IanTBlack/acspype/issues'
 Discussions = 'https://github.com/IanTBlack/acspype/discussions'
+"Additional Information" = 'https://github.com/IanTBlack/acspype/tree/main/info'
+
 
 
 [tool.pytest.ini_options]

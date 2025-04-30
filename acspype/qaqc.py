@@ -19,10 +19,10 @@ class FLAG:
     MISSING_DATA: int = 9
 
 
-def gap_test(now, time_stmp, buffer_length, frame_length, time_inc = 0.25):
+def gap_test(now, time_stmp, buffer_length, record_length, time_inc = 0.25):
     if now - time_stmp > timedelta(seconds = time_inc): # Defined in QARTOD Ocean Optics Manual.
         return FLAG.FAIL
-    elif buffer_length > frame_length:
+    elif buffer_length > record_length:
         """
         This is a custom take on the gap test. 
         If for some reason the buffer length exceeds the previous frame length, that would indicate that
@@ -63,20 +63,15 @@ def syntax_test(full_packet: bytearray) -> int:
 
 
 
-def _elapsed_time_test(elapsed_time: int, fail_threshold: int = 1000 * 60,
-                      suspect_threshold: int = 1000 * 60 * 3) -> int:
-    if elapsed_time <= fail_threshold:
-        return FLAG.FAIL
-    elif fail_threshold < elapsed_time <= suspect_threshold:
-        return FLAG.SUSPECT
-    else:
-        return FLAG.PASS
-
 def elapsed_time_test(elapsed_time: int | xr.DataArray, fail_threshold: int = 1000 * 60,
                       suspect_threshold: int = 1000 * 60 * 3) -> int | xr.DataArray:
     if not isinstance(elapsed_time, xr.DataArray):
-        flag = _elapsed_time_test(elapsed_time, fail_threshold=fail_threshold, suspect_threshold=suspect_threshold)
-        return flag
+        if elapsed_time <= fail_threshold:
+            return FLAG.FAIL
+        elif fail_threshold < elapsed_time <= suspect_threshold:
+            return FLAG.SUSPECT
+        else:
+            return FLAG.PASS
     else:
         flags = xr.full_like(elapsed_time, FLAG.NOT_EVALUATED)
         flags = xr.where(elapsed_time <= fail_threshold, FLAG.FAIL, flags)
@@ -96,8 +91,8 @@ def internal_temperature_test(internal_temperature: float | xr.DataArray,
             return FLAG.SUSPECT
     else:
         flags = xr.full_like(internal_temperature, FLAG.NOT_EVALUATED).astype(int)
-        flags = xr.where((min_t < internal_temperature) & (max_t > internal_temperature), FLAG.SUSPECT, flags)
-        flags = xr.where((min_t > internal_temperature) & (max_t < internal_temperature), FLAG.PASS, flags)
+        flags = xr.where((min_t > internal_temperature) & (max_t < internal_temperature), FLAG.SUSPECT, flags)
+        flags = xr.where((min_t <= internal_temperature) & (max_t >= internal_temperature), FLAG.PASS, flags)
         return flags
 
 
@@ -108,9 +103,9 @@ def inf_nan_test(uncorrected: NDArray[float] | xr.DataArray) -> int | xr.DataArr
         else:
             return FLAG.PASS
     else:
-        flags = xr.full_like(uncorrected, FLAG.PASS).astype(int)
-        flags = xr.where((~np.any(np.isinf(uncorrected),axis = 1)), FLAG.FAIL, flags)
-        flags = xr.where((~np.any(np.isnan(uncorrected), axis = 1)), FLAG.FAIL, flags)
+        flags = xr.full_like(uncorrected.time.astype(int), FLAG.PASS).astype(int)
+        flags = xr.where((np.any(np.isinf(uncorrected),axis = 1)), FLAG.FAIL, flags)
+        flags = xr.where((np.any(np.isnan(uncorrected), axis = 1)), FLAG.FAIL, flags)
         return flags
 
 
@@ -126,6 +121,8 @@ def gross_range_test(mts: xr.DataArray,
     flag = np.where((mts > op_min) | (mts < op_max), flag, FLAG.SUSPECT)
     return flag
 
+
+# TODO: Test below functions.
 
 
 def blanket_gross_range_test(mts: xr.DataArray, wavelength_dim: str, percent_unacceptable: float = 10.0,

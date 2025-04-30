@@ -5,22 +5,6 @@ import xarray as xr
 from acspype.ts4cor import TS4COR
 
 
-def _to_xarray(wavelengths, psi_t, psi_s_a, psi_s_c) -> xr.Dataset:
-    """
-    Export tscor coefficients to an xarray.Dataset.
-
-    :return: An xarray dataset containing correction data.
-    """
-    ds = xr.Dataset()
-    ds = ds.assign_coords({'wavelength': np.array(wavelengths)})
-    ds['psi_t'] = (['wavelength'], np.array(psi_t))
-    ds['psi_s_c'] = (['wavelength'], np.array(psi_s_c))
-    ds['psi_s_a'] = (['wavelength'], np.array(psi_s_a))
-
-    ds.attrs['tscor_data'] = 'Sullivan et al., 2006'
-    return ds
-
-
 class ACSTSCor:
     def __init__(self):
         self.wavelengths = tuple(TS4COR.keys())
@@ -29,8 +13,15 @@ class ACSTSCor:
         self.psi_t = list(map(lambda x: x[1]['psi_t'], TS4COR.items()))
         self.method = 'Sullivan et al., 2006'
 
+
     def to_xarray(self):
-        ds = _to_xarray(self.wavelengths, self.psi_t,self.psi_s_a, self.psi_s_c)
+        ds = xr.Dataset()
+        ds = ds.assign_coords({'wavelength': np.array(self.wavelengths)})
+        ds['psi_t'] = (['wavelength'], np.array(self.psi_t))
+        ds['psi_s_c'] = (['wavelength'], np.array(self.psi_s_c))
+        ds['psi_s_a'] = (['wavelength'], np.array(self.psi_s_a))
+
+        ds.attrs['tscor_data'] = self.method
         return ds
 
 
@@ -38,6 +29,8 @@ class ACSTS4CorReader:
     """
     A class for parsing ACS TS4.cor files and putting them into a format that is easier to work with for larger or
     multiple file datasets.
+
+    This class can be used if users want to import the TS4.cor file themselves.
     """
 
     def __init__(self, filepath: str) -> None:
@@ -96,5 +89,13 @@ class ACSTS4CorReader:
 
 
     def to_xarray(self):
-        ds = _to_xarray(self.wavelengths, self.psi_t,self.psi_s_a, self.psi_s_c)
+        ds = xr.Dataset()
+        ds = ds.assign_coords({'wavelength': np.array(self.wavelengths)})
+        ds['psi_t'] = (['wavelength'], np.array(self.psi_t))
+        ds['psi_s_c'] = (['wavelength'], np.array(self.psi_s_c))
+        ds['psi_s_a'] = (['wavelength'], np.array(self.psi_s_a))
+
+        ds.attrs['tscor_data'] = self.method
         return ds
+
+

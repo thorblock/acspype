@@ -6,6 +6,7 @@ from acspype.structures import ACSPacket, ParsedPacket, DeviceCalibratedPacket, 
 from acspype.packet import parse_packet, calibrate_packet, ts_correct_packet
 from acspype.dev import ACSDev
 
+
 class ACSStream():
 
     BAUDRATE: int = 115200
