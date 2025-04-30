@@ -1,9 +1,8 @@
 from datetime import datetime
 import numpy as np
 import re
-from scipy import interpolate
 import xarray as xr
-
+from scipy.interpolate import make_interp_spline
 from acspype.core import NUM_PAT
 
 
@@ -97,7 +96,7 @@ class ACSDev:
         tbins = tbin_line.split('\t')
         tbins = [v for v in tbins if v]  # Toss empty strings.
         tbins = [v for v in tbins if v != '\n']  # Toss newline characters.
-        self.tbin = np.array([float(v) for v in tbins if 'temperature bins' not in v])  # Convert to float and toss comment.
+        self.tbin = np.array([float(v) for v in tbins if 'temperature bins' not in v]) # Convert to float.
 
 
     def __parse_offsets(self) -> None:
@@ -153,11 +152,17 @@ class ACSDev:
         """
         Build interpolation functions for the a and c delta_t values and store as class attributes.
 
+        Note: In SciPy v 1.15.0, scipy.interpolate.interp1d has become legacy and it is recommended that other code
+        be used. first degree make_interp_spline has been implemented as a replacement.
+
         :return: None
         """
-        self.func_a_delta_t = interpolate.interp1d(self.tbin, self.a_delta_t, axis=1)
-        self.func_c_delta_t = interpolate.interp1d(self.tbin, self.c_delta_t, axis=1)
-        self.delta_t_interp_method = 'scipy.interpolate.interp1d'
+        # self.func_a_delta_t = interpolate.interp1d(self.tbin, self.a_delta_t, axis=1)
+        # self.func_c_delta_t = interpolate.interp1d(self.tbin, self.c_delta_t, axis=1)
+
+        self.func_a_delta_t = make_interp_spline(self.tbin, self.a_delta_t, k = 1, axis = 1)
+        self.func_c_delta_t = make_interp_spline(self.tbin, self.c_delta_t, k = 1, axis = 1)
+        self.delta_t_interp_method = 'scipy.interpolate.make_interp_spline'
 
 
     def __check_parse(self) -> None:

@@ -1,15 +1,25 @@
 from datetime import datetime, timezone
 import serial
 
-from acspype.core import PACKET_REGISTRATION, DefaultSerial
-from acspype.structures import ACSPacket
+from acspype.core import PACKET_REGISTRATION
+from acspype.structures import ACSPacket, ParsedPacket, DeviceCalibratedPacket, TSCorrectedPacket
+from acspype.packet import parse_packet, calibrate_packet, ts_correct_packet
+from acspype.dev import ACSDev
 
 class ACSStream():
+
+    BAUDRATE: int = 115200
+    BYTESIZE: int = 8
+    PARITY: str = 'N'
+    STOPBITS: int = 1
+    FLOWCONTROL: int = 0
+    TIMEOUT: int = 1
+
     def __init__(self, port: str,
-                 baudrate: int = DefaultSerial.BAUDRATE,
-                 timeout: float = DefaultSerial.TIMEOUT) -> None:
+                 baudrate: int = BAUDRATE,
+                 timeout: float = TIMEOUT) -> None:
         """
-        Instantiate the ACSStream class, reset the serial port, and clear any data in memory.
+        Instantiate the ACSSerial class, reset the serial port, and clear any data in memory.
 
         :param port: The COM port the ACS is connected to.
         :param baudrate: The baudrate of the ACS. All ACS sensors come from the factory set to 115200 bps.
@@ -40,11 +50,11 @@ class ACSStream():
 
     def reset_serial(self, port: str,
                      baudrate: int,
-                     bytesize: int = DefaultSerial.BYTESIZE,
-                     parity: str = DefaultSerial.PARITY,
-                     stopbits: int = DefaultSerial.STOPBITS,
-                     flowcontrol: int = DefaultSerial.FLOWCONTROL,
-                     timeout: int = DefaultSerial.TIMEOUT):
+                     bytesize: int = BYTESIZE,
+                     parity: str = PARITY,
+                     stopbits: int = STOPBITS,
+                     flowcontrol: int = FLOWCONTROL,
+                     timeout: int = TIMEOUT):
         """
         Reset or instantiate serial object using the assigned settings.
 
@@ -117,9 +127,9 @@ class ACSStream():
             packet_data, next_reg_bytes, next_loop_bytes = remaining_bytes.partition(PACKET_REGISTRATION)
             packet = reg_bytes + packet_data  # Rebuild the complete packet.
             self._buffer = next_reg_bytes + next_loop_bytes  # Redefine buffer.
-            acs_packet = ACSPacket(daq_time=daq_time, packet_data=packet)
+            acs_packet = ACSPacket(daq_time=daq_time, full_packet=packet)
         else:
-            acs_packet = ACSPacket(daq_time=daq_time, packet_data=None)
+            acs_packet = ACSPacket(daq_time=daq_time, full_packet=None)
         return acs_packet
 
 
@@ -145,3 +155,21 @@ class ACSStream():
         """
 
         self.disconnect()
+
+
+    def parse_packet(self, acs_packet: ACSPacket) -> ParsedPacket:
+        """ACSStream wrapper for the parse_packet function inherited from the packet module."""
+        parsed_packet = parse_packet(acs_packet)
+        return parsed_packet
+
+
+    def calibrate_packet(self, parsed_packet, dev:ACSDev) -> DeviceCalibratedPacket:
+        """ACSStream wrapper for the calibrate_packet function inherited from the packet module."""
+        dev_cal_packet = calibrate_packet(parsed_packet, dev)
+        return dev_cal_packet
+
+
+    def ts_correct_packet(self, dev_cal_packet, temperature, salinity, dev:ACSDev) -> TSCorrectedPacket:
+        """ACSStream wrapper for the ts_correct_packet function inherited from the packet module."""
+        ts_corrected_packet = ts_correct_packet(dev_cal_packet, temperature, salinity, dev)
+        return ts_corrected_packet

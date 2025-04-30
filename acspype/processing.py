@@ -1,166 +1,119 @@
+"""
+This module contains functions that are used to process data from the ACS.
+
+Most functions can be used with both scalar values and 1D arrays or xarray DataArrays.
+Scalar/1D inputs are intended to be used in the processing of a single packet or spectrum from the ACS.
+xarray DataArray implementation is intended to be used in the processing of multiple spectra already in an xarray Dataset.
+For calculations that are not immediately builtin to xarray,
+the xarray.apply_ufunc function is used to apply the function that is denoted with a prepended underscore.
+
+It is strongly recommended that your xarray Dataset contain the coordinates/dimensions of
+    time, a_wavelength, c_wavelength
+"""
+
+from collections.abc import Callable
 import numpy as np
-from struct import unpack_from
-from typing import Union, Tuple
+from numpy.typing import NDArray
+from scipy.interpolate import CubicSpline
 import xarray as xr
 
-from acspype.core import LPR, PACKET_TAIL, PACKET_HEAD, PAD_BYTE, WVL_BYTE_OFFSET
-from acspype.dev import ACSDev
-from acspype.tscor import ACSTSCor
-from acspype.structures import ACSPacket, ParsedPacket, CalibratedPacket
-from acspype.qaqc import FLAG, internal_temperature_test, syntax_test, elapsed_time_test
-from acspype.discontinuity import (find_discontinuity_index, _apply_discontinuity_offset,
-                                   _compute_discontinuity_offset, discontinuity_correction)
+from acspype import ACSDev, ACSTSCor
 
 
-
-def parse_packet(acs_packet: ACSPacket,
-                 run_syntax_test: bool = True,
-                 run_elapsed_time_test: bool = True) -> ParsedPacket:
+def _convert_sn_hexdec(sn_int: int) -> str:
     """
-    Parse an ACSPacket object into a ParsedPacket object.
+    Converts an integer representing an ACS serial number to the hexadecimal representation.
+    Application to an array of serial numbers requires this function to be vectorized. See convert_sn_hexdec.
 
-    :param acs_packet: The ACSPacket object, which contains daq_time and full_packet data.
-    :param run_syntax_test:  If True, runs the syntax test on the packet.
-    :param run_elapsed_time_test: If True, runs the elapsed time test on the packet.
-    :return: A ParsedPacket object containing the parsed data.
+    :param sn_int: An integer representing the ACS serial number.
+    :return: The hexadecimal representation of the serial number, not really as readable as the integer representation.
     """
-
-    daq_time, full_packet = acs_packet
-    if run_syntax_test is True:
-        flag_syntax = syntax_test(full_packet)
-    else:
-        flag_syntax = FLAG.NOT_EVALUATED
-    [nwvls] = unpack_from('B', full_packet, offset=WVL_BYTE_OFFSET)
-    remaining_packet_size = int(nwvls * 2 * 2)
-    full_packet_descriptor = PACKET_HEAD + f"{remaining_packet_size}H" + PACKET_TAIL
-    pad_byte_idx = full_packet.rfind(PAD_BYTE)
-    checksum_bytes = full_packet[pad_byte_idx - 2:pad_byte_idx]
-    checksum = unpack_from('!H', checksum_bytes)
-    if isinstance(checksum, tuple) and len(checksum) == 1:
-        checksum = checksum[0]
-    raw = unpack_from(full_packet_descriptor, full_packet)  # Note: The padbyte is not returned when unpacking.
-
-    # Split and process the raw data.
-    reg_bytes = raw[:LPR]
-    record_length = raw[LPR + 0]
-    packet_type = raw[LPR + 1]
-    reserved_1 = raw[LPR + 2]
-    sn_int = raw[LPR + 3]
-    a_reference_dark = raw[LPR + 4]
-    raw_pressure = raw[LPR + 5]
-    a_signal_dark = raw[LPR + 6]
-    raw_external_temp = raw[LPR + 7]
-    raw_internal_temp = raw[LPR + 8]
-    c_reference_dark = raw[LPR + 9]
-    c_signal_dark = raw[LPR + 10]
-    elapsed_time = raw[LPR + 11]
-    reserved_2 = raw[LPR + 12]
-    nwvls = raw[LPR + 13]
-    c_reference = raw[LPR + 14:LPR + 14 + (nwvls * 4):4]
-    a_reference = raw[LPR + 15:LPR + 15 + (nwvls * 4):4]
-    c_signal = raw[LPR + 16:LPR + 16 + (nwvls * 4):4]
-    a_signal = raw[LPR + 17:LPR + 17 + (nwvls * 4):4]
 
     sn_hexdec = hex(sn_int)
-    sn = 'ACS-' + str(int(hex(sn_int)[-6:], 16)).zfill(5)  # sn string becomes ACS-XXXXX. Zero padded to 5 digits.
+    return sn_hexdec
 
-    if run_elapsed_time_test is True:
-        flag_elapsed_time = elapsed_time_test(elapsed_time)
+def convert_sn_hexdec(sn_int: int | xr.DataArray) -> str | xr.DataArray:
+    """
+    Converts an integer representing an ACS serial number to the hexadecimal representation.
+
+    :param sn_int: An integer or xr.DataArray of integers representing the ACS serial number.
+    :return: The hexadecimal representation of the serial number, not really as readable as the integer representation.
+    """
+
+    if isinstance(sn_int, int):
+        return _convert_sn_hexdec(sn_int)
     else:
-        flag_elapsed_time = FLAG.NOT_EVALUATED
+        sn_hexdec = xr.apply_ufunc(_convert_sn_hexdec, sn_int,
+                                   input_core_dims=[[]],
+                                   output_core_dims=[[]],
+                                   vectorize=True)
+        return sn_hexdec
 
 
-    parsed_packet = ParsedPacket(daq_time=daq_time, registration_bytes=reg_bytes, record_length=record_length,
-                                 packet_type=packet_type, reserved_1=reserved_1, serial_number_int=sn_int,
-                                 number_of_output_wavelengths=nwvls, a_reference_dark=a_reference_dark,
-                                 c_reference_dark=c_reference_dark, raw_external_temperature=raw_external_temp,
-                                 raw_internal_temperature=raw_internal_temp, a_signal_dark=a_signal_dark,
-                                 c_signal_dark=c_signal_dark, elapsed_time=elapsed_time, reserved_2=reserved_2,
-                                 c_reference=c_reference, a_reference=a_reference, c_signal=c_signal, a_signal=a_signal,
-                                 raw_pressure=raw_pressure, checksum=checksum, serial_number_hexdec=sn_hexdec,
-                                 serial_number=sn, flag_syntax=flag_syntax, flag_elapsed_time=flag_elapsed_time)
-    return parsed_packet
 
-
-def calibrate_packet(parsed_packet: ParsedPacket, dev: ACSDev,
-                     flag_internal_temperature: bool = True) -> CalibratedPacket:
+def _convert_sn_str(sn_int: int) -> str:
     """
-    Calibrate a ParsedPacket object using the supplied ACS device file.
-    :param parsed_packet: The ParsedPacket object that contains raw data.
-    :param dev: The device file object to apply to the parsed packet.
-    :return: Data calibrated using the device file.
+    Converts an integer representing an ACS serial number to a string representation.
+    Application to an array of serial numbers requires this function to be vectorized. See convert_sn_str.
+
+    :param sn_int: An integer representing the ACS serial number.
+    :return: The string representation of the serial number, zero-padded for consistent string length into the future.
+    :note: The string serial number should match that of the serial number sticker on the ACS.
     """
 
-    a_uncorr = tuple(map(float,compute_uncorrected(np.array(parsed_packet.a_signal),
-                                                   np.array(parsed_packet.a_reference), dev)))
-    c_uncorr = tuple(map(float,compute_uncorrected(np.array(parsed_packet.c_signal),
-                                                   np.array(parsed_packet.c_reference), dev)))
+    sn_hexdec = convert_sn_hexdec(sn_int)
+    sn_str = 'ACS-' + str(int(sn_hexdec[-6:], 16)).zfill(5)  # sn string becomes ACS-XXXXX. Zero padded to 5 digits.
+    return sn_str
 
-    internal_temp = float(compute_internal_temperature(parsed_packet.raw_internal_temperature))
 
-    if flag_internal_temperature is True:
-        flag_internal_temp = internal_temperature_test(internal_temp, dev)
+def convert_sn_str(sn_int: int | xr.DataArray) -> str | xr.DataArray:
+    """
+    Converts an integer representing an ACS serial number to a string representation.
+
+    :param sn_int: An integer or xr.DataArray of integers representing the ACS serial number.
+    :return: The string representation of the serial number.
+    """
+    if isinstance(sn_int, int):
+        return _convert_sn_str(sn_int)
     else:
-        flag_internal_temp = FLAG.NOT_EVALUATED
-
-    external_temp = float(compute_external_temperature(parsed_packet.raw_external_temperature))
-
-    disc_idx = find_discontinuity_index(dev.a_wavelength, dev.c_wavelength)
-
-    a_disc = tuple(map(float,compute_measured(a_uncorr, 'a', internal_temp, dev)))
-    c_disc = tuple(map(float,compute_measured(c_uncorr, 'c', internal_temp, dev)))
-
-    a_discontinuity_offset = _compute_discontinuity_offset(a_disc, dev.a_wavelength, disc_idx)
-    c_discontinuity_offset = _compute_discontinuity_offset(c_disc, dev.c_wavelength, disc_idx)
-
-    a_m = tuple(map(float,_apply_discontinuity_offset(a_disc, a_discontinuity_offset, disc_idx)))
-    c_m = tuple(map(float,_apply_discontinuity_offset(c_disc, c_discontinuity_offset, disc_idx)))
-
-    calibrated_packet = CalibratedPacket(daq_time=parsed_packet.daq_time,
-                                         serial_number=parsed_packet.serial_number,
-                                         flag_syntax=parsed_packet.flag_syntax,
-                                         elapsed_time=parsed_packet.elapsed_time,
-                                         flag_elapsed_time=parsed_packet.flag_elapsed_time,
-                                         internal_temperature=internal_temp,
-                                         flag_internal_temperature= flag_internal_temp,
-                                         external_temperature=external_temp,
-                                         a_wavelength=tuple(map(float,dev.a_wavelength)),
-                                         c_wavelength=tuple(map(float,dev.c_wavelength)),
-                                         a_uncorrected=a_uncorr,
-                                         c_uncorrected=c_uncorr,
-                                         discontinuity_wavelength_index= disc_idx,
-                                         a_discontinuity_offset=a_discontinuity_offset,
-                                         c_discontinuity_offset= c_discontinuity_offset,
-                                         a_m_discontinuity=a_disc,
-                                         c_m_discontinuity=c_disc,
-                                         a_m=a_m,
-                                         c_m=c_m)
-    return calibrated_packet
+        sn_str = xr.apply_ufunc(_convert_sn_str, sn_int,
+                                input_core_dims=[[]],
+                                output_core_dims=[[]],
+                                vectorize=True)
+        return sn_str
 
 
-def compute_internal_temperature(counts: Union[int,xr.DataArray, np.array]) -> Union[np.array,xr.DataArray]:
+def compute_internal_temperature(counts: int | xr.DataArray) -> float | xr.DataArray:
     """
-    Compute internal sensor housing temperature in degrees Celsius. The formula for conversion can be found in the
-    ACS Manual.
-    :param counts: The count output of the internal thermistor.
-    :return: The converted data, with a shape/size that matches the input data.
+    Compute the internal temperature of the ACS from the counts of the internal temperature sensor.
+
+    :param counts: Values of the internal temperature sensor, in counts.
+    :return: An xr.DataArray of the internal temperature in degrees Celsius.
     """
 
+    a = 0.00093135
+    b = 0.000221631
+    c = 0.000000125741
+    d = 273.15
     volts = 5 * counts / 65535
     resistance = 10000 * volts / (4.516 - volts)
-    internal_temperature = 1 / (
-                0.00093135 + 0.000221631 * np.log(resistance) + 0.000000125741 * np.log(resistance) ** 3) - 273.15
-    return internal_temperature
+    internal_temperature = 1 / (a + b * np.log(resistance) + c * np.log(resistance) ** 3) - d
+    if isinstance(counts, int):
+        return float(internal_temperature)
+    else:
+        return internal_temperature
 
 
-def compute_external_temperature(counts: Union[int,xr.DataArray,np.array]) -> Union[float,np.array,xr.DataArray]:
+def compute_external_temperature(counts: int | xr.DataArray) -> float | xr.DataArray:
     """
-    Compute external temperature in degrees Celsius. This thermistor has contact with external air or fluid.
-    The formula for conversion can be found in the ACS Manual.
+    Compute the external temperature of the ACS from the counts of the external temperature sensor.
+    Not used in processing if the sensor is not placed in-situ or if there is a better source that is indicative
+    of the temperature of the water sampled by the ACS.
 
-    :param counts: The count output of the external thermistor.
-    :return: The converted data, with a shape/size that matches the input data.
+    :param counts: The counts of the external temperature sensor.
+    :return: The external temperature in degrees Celsius.
     """
+
     a = -7.1023317e-13
     b = 7.09341920e-08
     c = -3.87065673e-03
@@ -169,177 +122,289 @@ def compute_external_temperature(counts: Union[int,xr.DataArray,np.array]) -> Un
     return external_temperature
 
 
-def compute_uncorrected(signal_counts: Union[tuple, np.array, xr.DataArray],
-                        reference_counts: Union[tuple, np.array, xr.DataArray],
-                        dev: ACSDev) -> Union[np.array, xr.DataArray]:
+def compute_uncorrected(signal_counts: tuple[int, ...] | NDArray[float] | xr.DataArray,
+                        reference_counts: tuple[int, ...] | NDArray[float] | xr.DataArray,
+                        path_length: float = 0.25) -> NDArray[float] | xr.DataArray:
     """
-    Compute uncorrected absorption and attenuation from the sensor counts.
-    This value should not be used for scientific analysis, but can be used to diagnose issues, such as bubble intrusion
-    and blockages.
+    Compute the uncorrected coefficient from the signal and reference counts.
 
-    :param signal_counts: Raw signal counts from absorption or attenuation channels. Note that it is not necessary for
-    users to correct for dark values, as this is already performed internally by the sensor.
-    :param reference_counts: The reference absorption and attenuation counts output by the ACS sensor.
-    :param dev: The ACSDev object derived from the sensor device file.
-    :return: Uncorrected absorption and attenuation values with the units of inverse meters.
+    :param signal_counts: The absorption or attenuation channel signal counts.
+    :param reference_counts: The absorption or attenuation channel reference counts.
+    :param path_length: The path length of the ACS in meters. Default is 0.25m, but it is recommended to use the path length in the device file.
+    :return: Uncorrected absorption or attenuation coefficient in m^-1.
     """
 
-    uncorr = (1 / dev.path_length) * np.log(signal_counts / reference_counts)
+    if not isinstance(signal_counts, xr.DataArray):
+        signal_counts = np.array(signal_counts)
+        reference_counts = np.array(reference_counts)
+    uncorr = (1 / path_length) * np.log(signal_counts / reference_counts)
     return uncorr
 
 
+def compute_measured(uncorrected: NDArray[float] | xr.DataArray,
+                     internal_temperature: float | xr.DataArray,
+                     offset: NDArray[float],
+                     func_delta_t: Callable) -> NDArray[float] | xr.DataArray:
+
+    """
+    Compute the measured absorption or attenuation coefficient from the uncorrected coefficient and the internal temperature.
+
+    :param uncorrected: The uncorrected absorption or attenuation coefficient. Typically computed via compute_uncorrected().
+    :param internal_temperature: The internal temperature of the ACS in degrees Celsius. Typically computed via compute_internal_temperature().
+    :param offset: The coefficient offset from the device file.
+    :param func_delta_t: The interpolation function for correcting for internal temperature variation. This function is built by default when using an ACSDev object.
+    :return: Measured absorption or attenuation coefficient in m^-1, corrected for internal temperature variation.
+    """
 
 
-def compute_measured(uncorrected: list,
-                     channel: str,
-                     internal_temperature: float,
-                     dev: ACSDev):
-    """
-    Compute the measured absorption or attenuation from the uncorrected data. The data are corrected using the offsets
-    found in the supplied device file. If using the factory device file, data are corrected for the effect of pure water
-    on absorption and attenuation and the internal temperature of the sensor.
-    :param uncorrected: The uncorrected values in inverse meters.
-    :param channel: The channel or tube the data originates from. 'a' for absorption, 'c' for attenuation.
-    :param internal_temperature: The internal temperature of the sensor.
-    :param dev: A device file represented as a ACSDev object.
-    :return: The data corrected for the offset found in the device file.
-    """
-    if channel.lower() == 'a':
-        delta_t = dev.func_a_delta_t(internal_temperature).T
-        offsets = dev.a_offset
-    elif channel.lower() == 'c':
-        delta_t = dev.func_c_delta_t(internal_temperature).T
-        offsets = dev.c_offset
-    measured = (offsets - uncorrected) - delta_t
+    if not isinstance(uncorrected, xr.DataArray):
+        measured = (offset - uncorrected) - func_delta_t(internal_temperature)
+    else:
+        measured = (offset - uncorrected) - func_delta_t(internal_temperature).T
     return measured
 
 
-
-
-
-def ts_correction(m: xr.DataArray,
-                  channel: str,
-                  temperature: xr.DataArray,
-                  salinity: xr.DataArray,
-                  dev: ACSDev,
-                  tscor: ACSTSCor) -> xr.DataArray:
+def find_discontinuity_index(a_wavelengths: NDArray[float],
+                             c_wavelengths: NDArray[float],
+                             min_wvl: float = 535.0, max_wvl: float = 600.0) -> int:
     """
-    Compute temperature-salinity corrected data.
+    Find the wavelength index of the discontinuity in the absorption and attenuation spectra. The discontinuity is
+    in the range of 535-600nm.
 
-    :param m: The measured signal, corrected for pure water offsets. Does not yet imply the filtration state of the water.
-    :param channel: 'a' or 'c', used for obtaining the correct correction coeffs.
-    :param temperature: sea water temperature. conservative temperature is acceptable per the ACS manual,
-        but does not result in much change
-    :param salinity: sea water salinity. absolute salinity is acceptable per the ACS manual,
-        but does not result in much change.
-    :param dev: The corresponding ACSDev object for the dataset.
-    :param tscor: The corresponding ACSTSCor object for the dataset.
-
-    :return: An xr.DataArray containing temperature-salinity corrected data.
+    :param a_wavelengths: The absorption wavelengths of the ACS.
+    :param c_wavelengths: The attenuation wavelengths of the ACS.
+    :param min_wvl: Default is 535 nm. Can be adjusted if the discontinuity is not in the expected range.
+    :param max_wvl: Default is 600 nm. Can be adjusted if the discontinuity is not in the expected range.
+    :return: The index of the discontinuity in the absorption and attenuation spectra.
     """
 
-    _channel = channel.lower()
-    _tcal = dev.tcal
+    a_wvls = np.where((a_wavelengths < min_wvl) | (a_wavelengths > max_wvl), np.nan, a_wavelengths)
+    c_wvls = np.where((c_wavelengths < min_wvl) | (c_wavelengths > max_wvl), np.nan, c_wavelengths)
+    discontinuity_index = int(np.nanargmin(np.diff(a_wvls) + np.diff(c_wvls)))
+    return discontinuity_index
 
-    if _channel == 'a':
-        _tscor = tscor.to_xarray().sel(wavelength=m.a_wavelength, method='nearest')
-        delta_t, psi_temp = np.meshgrid(temperature - _tcal, _tscor.psi_t)
-        s, psi_sal = np.meshgrid(salinity, _tscor.psi_s_a)
-    elif _channel == 'c':
-        _tscor = tscor.to_xarray().sel(wavelength=m.c_wavelength, method='nearest')
-        delta_t, psi_temp = np.meshgrid(temperature - _tcal, _tscor.psi_t)
-        s, psi_sal = np.meshgrid(salinity, _tscor.psi_s_c)
-    mts = m - ((psi_temp.T * delta_t.T) + (psi_sal.T * s.T))
+
+def _compute_discontinuity_offset(measured: NDArray[float],
+                                  wavelength: NDArray[float],
+                                  disc_idx: int) -> float:
+    """
+    Compute the discontinuity offset for a measured coefficient.
+    compute_discontinuity_offset provides vectorization for this function.
+
+    :param measured: Absorption or attenuation coefficient.
+    :param wavelength: The wavelengths of the absorption or attenuation spectra.
+    :param disc_idx: The index of the discontinuity in the absorption and attenuation spectra.
+    :return: The offset of the discontinuity in the absorption and attenuation spectra as an integer.
+    """
+    x = wavelength[disc_idx - 2:disc_idx + 1]
+    y = measured[disc_idx - 2:disc_idx + 1]
+    if np.any(np.isinf(y)) or np.any(np.isnan(y)):
+        return np.nan
+    else:
+        cubic_spline = CubicSpline(x, y)
+        interp = cubic_spline(wavelength[disc_idx + 1], extrapolate=True)
+        offset = round(interp - measured[disc_idx + 1],4)
+        return offset
+
+
+def compute_discontinuity_offset(measured: NDArray[float] | xr.DataArray,
+                                 wavelength: NDArray[float] | xr.DataArray,
+                                 disc_idx: int,
+                                 wavelength_dim: str) -> float | xr.DataArray:
+    """
+    Compute the discontinuity offset for a measured coefficient.
+    :param measured: Absorption or attenuation coefficient.
+    :param wavelength: The wavelengths of the absorption or attenuation spectra.
+    :param disc_idx: The index of the discontinuity in the absorption and attenuation spectra.
+    :param wavelength_dim: The name of the wavelength dimension if inputting an xarray DataArray.
+    :return: The discontinuity offset of the absorption and attenuation spectra as a float.
+    """
+
+    if not isinstance(measured, xr.DataArray):
+        disc_off = _compute_discontinuity_offset(measured, wavelength, disc_idx)
+    else:
+        disc_off = xr.apply_ufunc(_compute_discontinuity_offset, measured,
+                                  kwargs={'wavelength': measured[wavelength_dim].values, 'disc_idx': disc_idx},
+                                  input_core_dims=[[wavelength_dim]],
+                                  output_core_dims=[[]],
+                                  vectorize=True)
+    return disc_off
+
+
+def _apply_discontinuity_offset(measured: NDArray[float],
+                                disc_off: float,
+                                disc_idx: int) -> NDArray[float]:
+    """
+    Apply a discontinuity offset to a measured coefficient.
+    Note: This function is not vectorized. The input measured array is copied to prevent memory conflicts.
+
+    :param measured: Measured absorption or attenuation coefficient.
+    :param disc_off: The discontinuity offset of the absorption and attenuation spectra.
+    :param disc_idx: The index of the discontinuity in the absorption and attenuation spectra.
+    :return: The spectrum with the offset applied.
+    """
+
+    _measured = np.copy(measured)
+    _measured[disc_idx + 1:] = _measured[disc_idx + 1:] + disc_off
+    return _measured
+
+
+
+def apply_discontinuity_offset(measured, disc_off, disc_idx, wavelength_dim):
+    """
+    Apply a discontinuity offset to a measured coefficient. Vectorized version of _apply_discontinuity_offset, where
+    applicable.
+
+    :param measured: Measured absorption or attenuation coefficient.
+    :param disc_off: The discontinuity offset of the absorption and attenuation spectra.
+    :param disc_idx: The index of the discontinuity in the absorption and attenuation spectra.
+    :param wavelength_dim: The name of the wavelength dimension if inputting an xarray DataArray.
+    :return: The spectrum with the offset applied.
+    """
+    if not isinstance(measured, xr.DataArray):
+        disc_applied = _apply_discontinuity_offset(measured, disc_off, disc_idx)
+    else:
+        disc_applied = xr.apply_ufunc(_apply_discontinuity_offset, measured, disc_off,
+                            kwargs = {'disc_idx': disc_idx},
+                            input_core_dims=[[wavelength_dim],[]],
+                            output_core_dims = [[wavelength_dim]],
+                            vectorize = True)
+    return disc_applied
+
+
+
+def discontinuity_correction(measured: xr.DataArray,
+                             discontinuity_index: xr.DataArray,
+                             wavelength_dim: str) -> tuple[xr.DataArray, xr.DataArray]:
+    """
+    Compute the discontinuity offset and apply it to the measured coefficient.
+    NOTE: This function only works with xarray DataArrays.
+
+    :param measured: The measured absorption or attenuation coefficient.
+    :param discontinuity_index: The index of the discontinuity in the absorption and attenuation spectra.
+    :param wavelength_dim: The wavelength dimension of the measured coefficient if inputting an xarray DataArray.
+    :return:
+    """
+    disc_offset = compute_discontinuity_offset(measured, measured[wavelength_dim].values,
+                                               discontinuity_index, wavelength_dim)
+    disc_applied = apply_discontinuity_offset(measured, disc_offset,
+                                              discontinuity_index,  wavelength_dim)
+    return disc_applied, disc_offset
+
+
+def ts_correction(measured: NDArray[float] | xr.DataArray,
+                  temperature: float | xr.DataArray,
+                  salinity: float | xr.DataArray,
+                  psi_temperature: NDArray[float] | xr.DataArray,
+                  psi_salinity: NDArray[float] | xr.DataArray,
+                  tcal: float) -> NDArray[float] | xr.DataArray:
+    """
+    Correct the measured absorption or attenuation coefficient for temperature and salinity.
+    This function works on singletons and xarray DataArrays.
+
+    :param measured: The measured absorption or attenuation coefficient.
+    :param temperature: The temperature of the water in degrees Celsius.
+    :param salinity: The salinity of the water in PSU.
+    :param psi_temperature: The temperature coefficients from ACSTSCor,
+        subset by wavelength equivalent to the corresponding measured coefficient wavelengths.
+    :param psi_salinity: The temperature coefficients from ACSTSCor,
+        subset by wavelength equivalent to the corresponding measured coefficient wavelengths.
+    :param tcal: The tcal value from the device file.
+    :return: TS-corrected absorption or attenuation coefficient in m^-1.
+    """
+
+    dT, psi_t = np.meshgrid(temperature - tcal, psi_temperature)
+    s, psi_s = np.meshgrid(salinity, psi_salinity)
+    mts = measured - ((psi_t.T * dT.T) + (psi_s.T * s.T))
     return mts
 
 
-def zero_shift(mts: xr.DataArray) -> xr.DataArray:
+def zero_shift_correction(mts: NDArray[float] | xr.DataArray) -> NDArray[float] | xr.DataArray:
     """
-    Zero out any values that are between -0.005 and 0. According to the manual, these values are equivalent to 0.
+    Shift values between [-0.005, 0] to 0. This function works both for 1D arrays and xarray DataArrays.
 
-    :param mts: The absorption or attenuation, corrected for temperature and salinity.
-    :return: The zeroed out data.
+    :param mts: The TS-corrected absorption or attenuation coefficient
+    :return: The shifted TS-corrected absorption or attenuation coefficient.
     """
 
-    mts = mts.where((mts > 0) | (mts <= -0.005), 0)
+    if not isinstance(mts, xr.DataArray):
+        mts = np.where((mts >= -0.005) & (mts < 0), 0, mts)
+    else:
+        mts = mts.where((mts > 0) | (mts <= -0.005), 0)
     return mts
 
 
-def interpolate_common_wavelengths(ds: xr.Dataset, step: int = 1,
-                                   wavelength_range: list or str = 'infer') -> xr.Dataset:
+
+def interpolate_common_wavelengths(ds: xr.Dataset, a_wavelength_dim: str, c_wavelength_dim: str,
+                                   wavelength_range: list or str = 'infer', step: int = 1,) -> xr.Dataset:
+    """
+    This function interpolates the absorption and attenuation spectra to a common wavelength range and step size.
+    Only works on xarray Datasets. Applies interpolation to all variables on the a_wavelength and c_wavelength dimensions.
+
+    :param ds:
+    :param a_wavelength_dim:
+    :param c_wavelength_dim: 
+    :param wavelength_range:
+    :param step:
+    :return:
+    """
     if wavelength_range == 'infer':
-        min_wvl = np.ceil(max(ds.a_wavelength.min(), ds.c_wavelength.min())) # Maximum of a and c wavelength minimums.
-        max_wvl = np.floor(min(ds.a_wavelength.max(), ds.c_wavelength.max())) # Minimum of a and c wavelength maximums.
+        min_wvl = np.ceil(max(ds[a_wavelength_dim].min(), ds[c_wavelength_dim].min())) # Maximum of a and c wavelength minimums.
+        max_wvl = np.floor(min(ds[a_wavelength_dim].max(), ds[c_wavelength_dim].max())) # Minimum of a and c wavelength maximums.
     else:
         min_wvl, max_wvl = wavelength_range
     wvls = np.arange(min_wvl, max_wvl, step)
-    cds = ds.interp({'a_wavelength': wvls, 'c_wavelength': wvls})  # Interpolate to step size.
-    cds = cds.reset_index(['a_wavelength',
-                           'c_wavelength'], drop=True).assign_coords(wavelength=wvls).rename(
-        {'a_wavelength': 'wavelength',
-         'c_wavelength': 'wavelength'})
-
+    cds = ds.interp({a_wavelength_dim: wvls, c_wavelength_dim: wvls})  # Interpolate to step size.
+    cds = cds.reset_index([a_wavelength_dim,
+                           c_wavelength_dim], drop=True).assign_coords(wavelength=wvls).rename(
+        {a_wavelength_dim: 'wavelength',
+         c_wavelength_dim: 'wavelength'})
     cds.attrs['interpolation_step'] = step
     return cds
 
 
-def scattering_correction_baseline(a_mts: xr.DataArray, reference_wavelength: int = 715):
-    """
-    METHOD 1
-    Perform baseline scattering correction on absorption data.
-    Although this function will work with data that is not on a common wavelength bin,
-    it is recommended that you apply this function with wavelength interpolated data.
+def _determine_reference_wavelength_index(spectra):
+    num_wvls = len(spectra)
+    len_non_reds = len(spectra[:int(num_wvls*3/4)])
+    reds = spectra[int(num_wvls*3/4):]
+    reds_pos = np.where(reds < 0, np.nan, reds)
+    if np.all(np.isnan(reds_pos)):
+        return -999
+    reds_wvl_idx = int(np.nanargmin(reds_pos))
+    wvl_idx = len_non_reds + reds_wvl_idx
+    return wvl_idx
 
-    :param a_mts: TS corrected absorption.
-    :param reference_wavelength: The reference wavelength. Usually 715.
-    :return: Absorption corrected using the baseline method.
-    """
-    if 'wavelength' in a_mts.dims:
-        ref = a_mts.sel(wavelength=reference_wavelength, method='nearest')
-    else:
-        ref = a_mts.sel(a_wavelength=reference_wavelength, method='nearest')
-    scatcorr = a_mts - ref
 
-    scatcorr.attrs['reference_wavelength'] = reference_wavelength
-    scatcorr.attrs['method'] = 'Baseline Scattering Correction - Method 1'
+def estimate_reference_wavelength(a_mts: xr.DataArray, wavelength_dim: str) -> float:
+    wvl_idxs = xr.apply_ufunc(_determine_reference_wavelength_index,
+                              a_mts,
+                              input_core_dims=[['wavelength']],
+                              vectorize=True)
+    idxs, counts = np.unique(wvl_idxs, return_counts = True)
+    wvl_idx = idxs[np.nanargmax(counts)]
+    if wvl_idx == -999:
+        raise ValueError('No reference wavelength found. Please check the spectra.')
+    wvl = float(a_mts[wavelength_dim].values[wvl_idx])
+    return wvl
+
+
+def baseline_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
+                                   reference_a: float | xr.DataArray) -> NDArray[float] | xr.DataArray:
+    scatcorr = a_mts - reference_a
     return scatcorr
 
 
-def scattering_correction_fixed(a_mts: xr.DataArray, c_mts: xr.DataArray, F: float = 0.18) -> xr.DataArray:
-    """
-    METHOD 2
-    Perform fixed scattering correction on absorption data.
-    Use of this method requires that the absorption and attenuation data be on common wavelength bins.
+def fixed_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
+                                c_mts: NDArray[float] | xr.DataArray, 
+                                F: float = 0.14) -> NDArray[float] | xr.DataArray:
 
-    :param a_mts: TS corrected absorption.
-    :param c_mts: TS corrected attenuation.
-    :param F: The fixed offset.
-    :return: Absorption corrected using the baseline method.
-    """
     scatcorr = a_mts - F * (c_mts - a_mts)
-
-    scatcorr.attrs['epsilon'] = F
-    scatcorr.attrs['method'] = 'Fixed Scattering Correction - Method 2'
     return scatcorr
 
 
-def scattering_correction_proportional(a_mts: xr.DataArray, c_mts: xr.DataArray,
-                                       reference_wavelength: int = 715) -> xr.DataArray:
-    """
-    METHOD 3
-    Perform proportional scattering correction on absorption data.
-    Use of this method requires that the absorption and attenuation data be on common wavelength bins.
-
-    :param a_mts: TS corrected absorption.
-    :param c_mts: TS corrected attenuation.
-    :param reference_wavelength: The reference wavelength. Usually 715.
-    :return: Absorption corrected using the baseline method.
-    """
-
-    ref_a = a_mts.sel(wavelength=reference_wavelength, method='nearest')
-    ref_c = c_mts.sel(wavelength=reference_wavelength, method='nearest')
-    scatcorr = a_mts - ((ref_a / (ref_c - ref_a)) * (c_mts - a_mts))
-
-    scatcorr.attrs['reference_wavelength'] = reference_wavelength
-    scatcorr.attrs['method'] = 'Proportional Scattering Correction - Method 3'
+def proportional_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
+                                       c_mts: NDArray[float] | xr.DataArray,
+                                       reference_a: NDArray[float] | xr.DataArray,
+                                       reference_c: NDArray[float] | xr.DataArray) -> NDArray[float] | xr.DataArray:
+    scatcorr = a_mts - ((reference_a / (reference_c - reference_a)) * (c_mts - a_mts))
     return scatcorr

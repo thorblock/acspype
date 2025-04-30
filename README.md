@@ -56,6 +56,15 @@ Although it was designed to not enforce strict naming conventions, there are som
 It is strongly encouraged that users follow the naming conventions used in the examples and within the metadata file. acspype contains pre-defined and dynamic metadata that clearly identifies products and the ancillary data used to create them.
 
 
+## Quality Assurance and Qualtiy Control (QAQC)
+*acspype* offers several QAQC tests which can be used to remove poor quality spectra. Many of these tests are specific to the ACS, but some are QARTOD-esque. *acspype* uses QARTOD-style flagging and nomenclature.
+
+### Gap Test
+The gap test (`acspype.qaqc.gap_test`) can only really be done as data are acquired over a serial port. At the time of acquisition, a timestamp should be obtained from the host computer. Assuming the gap test is immediately run after parsing the packet, another timestamp should be obtained.
+If the time difference between the two packets is more than 250 milliseconds, then that may indicate that the process in between acquisition and assessment is taking too long and that the serial buffer could pile up.
+
+The gap test also checks the number of bytes in the serial buffer against the expected record length of an ACS packet. If the number of bytes in the buffer exceeds the record length, then that is an indicator that the serial buffer is piling up. 
+
 
 
 ### Serial Pipeline Example

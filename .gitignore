@@ -121,7 +121,7 @@ celerybeat.pid
 
 # Environments
 .env
-.venv
+../../../Desktop/acspype/.venv
 env/
 venv/
 ENV/
@@ -160,9 +160,11 @@ cython_debug/
 .idea/
 
 # Custom
-dev_tools/
 examples/*.nc
-uv.lock
+old/uv.lock
 acspype.egg-info/
 dist/
-
+ooi_data/
+*.png
+*.jpg
+*.tif

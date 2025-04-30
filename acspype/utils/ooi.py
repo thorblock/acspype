@@ -4,13 +4,15 @@ import os
 import pandas as pd
 import re
 import requests
-from scipy import interpolate
+from scipy.interpolate import make_interp_spline
 import shutil
 import xarray as xr
 
+
+
 def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     """
-    Reformat an OOI OPTAA dataset to make it more compatible with acspype.
+    Reformat an OOI OPTAA dataset to make it more compatible with _acspype.
 
     :param ds: An OOI OPTAA dataset.
     :return: A reformatted and renamed OOI OPTAA dataset.
@@ -47,7 +49,7 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
         else:
             nds[var] = (['time'], ds[var].data)
 
-    # Rename variables to match acspype.
+    # Rename variables to match _acspype.
     mapper = {'external_temp_raw': 'raw_external_temperature',
               'c_signal_counts': 'c_signal',
               'a_signal_counts': 'a_signal',
@@ -71,6 +73,7 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
               'pressure_counts': 'raw_pressure',
               'preferred_timestamp': 'preferred_timestamp',
               'a_signal_dark_counts': 'a_signal_dark',
+              'a_reference_dark_counts': 'a_reference_dark',
               'c_reference_counts': 'c_reference',
               'suspect_timestamp': 'suspect_timestamp',
               'sea_water_temperature': 'sea_water_temperature'}
@@ -113,7 +116,7 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
 
 def build_acpype_dev_obj(response_data, start) -> object:
     """
-    Build an ACSDev-like object for processing OOI OPTAA data with acspype.
+    Build an ACSDev-like object for processing OOI OPTAA data with _acspype.
 
     :param response_data: The response from a uid request to the OOI API.
     :param start: The start time of dataset, used to find the most recent calibration.
@@ -164,8 +167,13 @@ def build_acpype_dev_obj(response_data, start) -> object:
         c_delta_t = cal_data['c_delta_t']
         tcal = cal_data['tcal']
         path_length = 0.25
-        func_a_delta_t = interpolate.interp1d(cal_data['tbins'], cal_data['a_delta_t'], axis=1)
-        func_c_delta_t = interpolate.interp1d(cal_data['tbins'], cal_data['c_delta_t'], axis=1)
+
+        # func_a_delta_t = interpolate.interp1d(cal_data['tbins'], cal_data['a_delta_t'], axis=1)
+        # func_c_delta_t = interpolate.interp1d(cal_data['tbins'], cal_data['c_delta_t'], axis=1)
+        func_a_delta_t = make_interp_spline(cal_data['tbins'], cal_data['a_delta_t'], k = 1, axis = 1)
+        func_c_delta_t = make_interp_spline(cal_data['tbins'], cal_data['c_delta_t'], k = 1, axis = 1)
+
+
     return Dev
 
 
@@ -190,7 +198,8 @@ def get_ooi_optaa_cal(ds: xr.Dataset) -> object:
             dev = build_acpype_dev_obj(data, start)
             return dev
 
-def download_and_load_goldcopy(thredds_fileserver_url: str) -> xr.Dataset:
+
+def download_and_load_goldcopy(thredds_fileserver_url: str, save_dir: str = 'ooi_data/') -> xr.Dataset:
     """
     Download and load a dataset from the OOI THREDDS GoldCopy catalog.
     Sometimes data accessed through the OpenDAP URL is incomplete, so downloading is recommended.
@@ -198,16 +207,18 @@ def download_and_load_goldcopy(thredds_fileserver_url: str) -> xr.Dataset:
     :param thredds_fileserver_url: A THREDDS GoldCopy URL. Must be fileServer, not dodsC.
     :return: The xarray dataset.
     """
+    os.makedirs(save_dir, exist_ok=True)
     filename = os.path.basename(thredds_fileserver_url)
-    if os.path.isfile(filename):
-        ds = xr.open_dataset(filename)
+    fp = os.path.join(save_dir, filename)
+    if os.path.isfile(fp):
+        ds = xr.open_dataset(fp)
         return ds
     else:
         with requests.get(thredds_fileserver_url, stream = True) as req:
-            with open(filename, 'wb') as fileobj:
+            with open(fp, 'wb') as fileobj:
                 shutil.copyfileobj(req.raw, fileobj)
-        if os.path.isfile(filename):
-            ds = xr.open_dataset(filename)
+        if os.path.isfile(fp):
+            ds = xr.open_dataset(fp)
             return ds
         else:
             return FileNotFoundError
