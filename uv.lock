@@ -10,7 +10,7 @@ resolution-markers = [
 
 [[package]]
 name = "acspype"
-version = "0.2.0"
+version = "0.2.1"
 source = { virtual = "." }
 dependencies = [
     { name = "bottleneck" },
@@ -28,7 +28,7 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-dev = [
+dev-tools = [
     { name = "fsspec" },
     { name = "gsw" },
     { name = "ipykernel" },
@@ -43,24 +43,24 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "bottleneck" },
-    { name = "fsspec", marker = "extra == 'dev'" },
-    { name = "gsw", marker = "extra == 'dev'" },
-    { name = "ipykernel", marker = "extra == 'dev'" },
-    { name = "ipympl", marker = "extra == 'dev'" },
-    { name = "jupyter", marker = "extra == 'dev'" },
-    { name = "matplotlib", marker = "extra == 'dev'" },
+    { name = "fsspec", marker = "extra == 'dev-tools'" },
+    { name = "gsw", marker = "extra == 'dev-tools'" },
+    { name = "ipykernel", marker = "extra == 'dev-tools'" },
+    { name = "ipympl", marker = "extra == 'dev-tools'" },
+    { name = "jupyter", marker = "extra == 'dev-tools'" },
+    { name = "matplotlib", marker = "extra == 'dev-tools'" },
     { name = "netcdf4" },
     { name = "numpy" },
     { name = "pandas" },
     { name = "pyserial" },
-    { name = "pytest", marker = "extra == 'dev'" },
+    { name = "pytest", marker = "extra == 'dev-tools'" },
     { name = "requests" },
     { name = "scipy" },
     { name = "serial" },
-    { name = "uv", marker = "extra == 'dev'" },
+    { name = "uv", marker = "extra == 'dev-tools'" },
     { name = "xarray" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["dev-tools"]
 
 [[package]]
 name = "anyio"
