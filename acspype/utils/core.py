@@ -19,6 +19,16 @@ def list_available_ports() -> list:
 def find_acs_port(baudrate: int = 115200,
                   timeout: int = 1,
                   check_length: int = 1) -> str:
+    """
+    Iterate through available serial ports and check the incoming data for the ACS registration bytes.
+
+    :param baudrate: The baudrate for the ACS connection. Default is 115200 bps and does not need to be changed.
+    :param timeout: The timeout for the serial connection. Default is 1 second.
+    :param check_length: The amount of time in seconds to collect data from the serial port in
+        hopes of receiving the ACS registration bytes.
+    :return: The operating system serial port as a string. Can be used by pyserial for future connections.
+    """
+
     available_ports = list_available_ports()
     for port in available_ports:
         try:

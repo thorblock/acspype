@@ -121,6 +121,15 @@ def ts_correct_packet(device_calibrated_packet: DeviceCalibratedPacket,
                       temperature: float,
                       salinity: float,
                       dev: ACSDev) -> TSCorrectedPacket:
+    """
+    Apply TS-correction to a device calibrated packet.
+
+    :param device_calibrated_packet: A DeviceCalibratedPacket object containing the device calibrated data.
+    :param temperature: The temperature or conservative temperature of the water sample in degrees Celsius.
+    :param salinity: The practical or absolute salinity of the water sample.
+    :param dev: A ACSDev-like object containing the device calibration parameters.
+    :return: A TSCorrectedPacket object containing the TS-corrected data.
+    """
 
     tscor = ACSTSCor().to_xarray()
     psi_s_a = tscor.psi_s_a.sel(wavelength=np.array(device_calibrated_packet.a_wavelength), method='nearest')

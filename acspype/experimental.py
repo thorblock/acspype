@@ -1,5 +1,21 @@
 import xarray as xr
 
+
+def compute_alh_676(a_p_650: xr.DataArray, a_p_676: xr.DataArray, a_p_715: xr.DataArray) -> xr.DataArray:
+    """
+    Compute absorption line height at 676 nm via Boss et al, 2007.
+    https://link.springer.com/chapter/10.1007/978-1-4020-5824-0_9
+
+    :param a_p_650: a_p data at 650 nm.
+    :param a_p_676: a_p data at 676 nm.
+    :param a_p_715: a_p data at 715 nm.
+    :return: Absorption line height at 676 nm in m^-1.
+    """
+
+    alh = (a_p_676 - (39/65 * a_p_650) + (26/65 * a_p_715))
+    return alh
+
+
 def compute_chl_alh(a_p_650: xr.DataArray,
                     a_p_676: xr.DataArray,
                     a_p_715: xr.DataArray,

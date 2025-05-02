@@ -1,3 +1,8 @@
+"""
+This module contains helper functions for accessing and working with OOI ACS data.
+The OOI has named all their ACS sensors OPTAA.
+"""
+
 from datetime import datetime
 import numpy as np
 import os

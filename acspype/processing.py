@@ -253,6 +253,7 @@ def compute_discontinuity_offset(measured: NDArray[float] | xr.DataArray,
                                  wavelength_dim: str) -> float | xr.DataArray:
     """
     Compute the discontinuity offset for a measured coefficient.
+
     :param measured: Absorption or attenuation coefficient.
     :param wavelength: The wavelengths of the absorption or attenuation spectra.
     :param disc_idx: The index of the discontinuity in the absorption and attenuation spectra.
@@ -503,37 +504,33 @@ def proportional_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
 
 
 def baseline_plus_scattering_correction(a_mts: xr.DataArray,
-                                        reference_wavelength: float = 715.0) -> xr.DataArray:
-    # TODO - Implement functionality to allow use on a single ACS packet.
+                                        a_mts_715: xr.DataArray,) -> xr.DataArray:
     """
     Perform baseline plus scattering correction for the absorption coefficient.
     This method originates from Rottgers et al. (2013). https://doi.org/10.1016/j.mio.2013.11.001
     True absorption at 715nm is empirically determined in Equation 5.
 
     :param a_mts: The TS-corrected absorption coefficient.
-    :param reference_wavelength: The reference wavelength. Historically, 715nm is used.
+    :param a_mts_715: The absorption at the reference wavelength. Historically, 715nm is used.
     :return: Baseline plus scattering corrected absorption coefficient.
     """
 
-    ref_a = a_mts.sel(wavelength=reference_wavelength, method='nearest')
-    true_a_715 = 0.212 * np.pow(ref_a, 1.135)  # Equation 5 from Rottgers et al. (2013)
-
-
-    scatcorr = a_mts - (ref_a - true_a_715) # Equation 3 from Rottgers et al. (2013)
+    true_a_715 = 0.212 * np.pow(a_mts_715, 1.135)  # Equation 5 from Rottgers et al. (2013)
+    scatcorr = a_mts - (a_mts_715 - true_a_715) # Equation 3 from Rottgers et al. (2013)
 
     if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xr.DataArray.
         scatcorr.attrs['ancillary_variables'] = ', '.join([a_mts.name])
-        scatcorr.attrs['reference_wavelength'] = reference_wavelength
+        scatcorr.attrs['reference_wavelength'] = 715
         scatcorr.attrs['scattering_correction_method'] = 'Baseline+ , Rottgers et al. (2013)'
     return scatcorr
 
 
 def proportional_plus_scattering_correction(a_mts: xr.DataArray,
                                             c_mts: xr.DataArray,
-                                            reference_wavelength: float = 715.0,
+                                            a_mts_715: xr.DataArray,
+                                            c_mts_715: xr.DataArray,
                                             e_c: float = 0.56) -> xr.DataArray:
-    # TODO - Implement functionality to allow use on a single ACS packet.
-    # TODO - Implement functionality to not rely on interpolated wavelength bins.
+
     """
     Perform proportional plus scattering correction for the absorption coefficient.
     This method originates from Rottgers et al. (2013). https://doi.org/10.1016/j.mio.2013.11.001
@@ -544,61 +541,60 @@ def proportional_plus_scattering_correction(a_mts: xr.DataArray,
 
     :param a_mts: The TS-corrected absorption coefficient.
     :param c_mts: The TS-corrected attenuation coefficient.
-    :param reference_wavelength: The reference wavelength. Historically, 715nm is used.
+    :param a_mts_715: The absorption at the reference wavelength. Historically, 715nm is used.
     :param e_c: The attenuation correction factor. Normally it is 1 (no attenuation correction),
         but Rottgers et al. (2013) suggest a value of 0.56 when running wavelength independent correction (which this
         function does).
     :return: Proportional plus scattering corrected absorption coefficient.
     """
 
-    ref_a = a_mts.sel(wavelength = reference_wavelength, method = 'nearest')
-    true_a_715 = 0.212 * np.pow(ref_a, 1.135) # Equation 5 from Rottgers et al. (2013)
-    ref_c = c_mts.sel(wavelength = reference_wavelength, method = 'nearest')
-
-    scatcorr = a_mts - (ref_a - true_a_715) * (((1/e_c) * c_mts - a_mts)/((1/e_c) * ref_c - true_a_715)) # Equation 4
+    true_a_715 = 0.212 * np.pow(a_mts_715, 1.135)  # EQ5 from Rottgers et al. (2013)
+    scatcorr = a_mts - (a_mts_715 - true_a_715) * (((1/e_c) * c_mts - a_mts)/((1/e_c) * c_mts_715 - true_a_715)) # EQ4
 
     if isinstance(scatcorr, xr.DataArray):    # Assign attributes if output is an xr.DataArray.
-        scatcorr.attrs['ancillary_variables'] = ', '.join([a_mts.name, c_mts.name, 'reference_wavelength'])
-        scatcorr.attrs['reference_wavelength'] = reference_wavelength
+        scatcorr.attrs['ancillary_variables'] = ', '.join([a_mts.name, c_mts.name])
+        scatcorr.attrs['reference_wavelength'] = 715
         scatcorr.attrs['scattering_correction_method'] = 'Proportional+ , Rottgers et al. (2013)'
     return scatcorr
 
 
-# IN DEVELOPMENT
-#
-#
-# def _determine_reference_wavelength_index(spectra):
-#     num_wvls = len(spectra)
-#     len_non_reds = len(spectra[:int(num_wvls*3/4)])
-#     reds = spectra[int(num_wvls*3/4):]
-#     reds_pos = np.where(reds < 0, np.nan, reds)
-#     if np.all(np.isnan(reds_pos)):
-#         return -999
-#     reds_wvl_idx = int(np.nanargmin(reds_pos))
-#     wvl_idx = len_non_reds + reds_wvl_idx
-#     return wvl_idx
-#
-#
-# def estimate_reference_wavelength(a_mts: xr.DataArray, wavelength_dim: str) -> float:
-#     wvl_idxs = xr.apply_ufunc(_determine_reference_wavelength_index,
-#                               a_mts,
-#                               input_core_dims=[[wavelength_dim]],
-#                               vectorize=True)
-#     idxs, counts = np.unique(wvl_idxs, return_counts = True)
-#     wvl_idx = idxs[np.nanargmax(counts)]
-#     if wvl_idx == -999:
-#         raise ValueError('No reference wavelength found. Please check the spectra.')
-#     wvl = float(a_mts[wavelength_dim].values[wvl_idx])
-#     return wvl
-#
-#
-#
-# def compute_total(uncorrected: NDArray[float] | xr.DataArray,
-#                   internal_temperature: float | xr.DataArray,
-#                   func_delta_t: Callable) -> NDArray[float] | xr.DataArray:
-#     if not isinstance(uncorrected, xr.DataArray):
-#         total = uncorrected - func_delta_t(internal_temperature)
-#     else:
-#         total = uncorrected - func_delta_t(internal_temperature).T
-#     return total
-#
+def _estimate_reference_wavelength_index(a_spectra: np.array) -> int:
+    """
+    Estimate the index of the reference wavelength of an absorption spectra. This function finds the first
+    wavelength in the last 1/4 wavelength bins that is greater than and nearest to zero.
+    If the entire spectra is NaN, then a wvl_idx of NaN is returned.
+
+    :param a_spectra: A 1D array of absorption spectra.
+    :return: The index of the reference wavelength.
+    """
+    num_wvls = len(a_spectra)
+    len_non_reds = len(a_spectra[:int(num_wvls*3/4)])
+    reds = a_spectra[int(num_wvls*3/4):]
+    reds_pos = np.where(reds < 0, np.nan, reds)
+    if np.all(np.isnan(reds_pos)):
+        return np.nan
+    reds_wvl_idx = int(np.nanargmin(reds_pos))
+    wvl_idx = len_non_reds + reds_wvl_idx
+    return wvl_idx
+
+
+def estimate_reference_wavelength(a_mts: xr.DataArray, wavelength_dim: str) -> float:
+    """
+    Estimate a reference wavelength for an ND absorption dataset.
+    The index closest to zero in the last 1/4 of each spectrum sample is determined. The index with the most repeats
+    across the datasets is estimated as the reference wavelength.
+
+    :param a_mts: TS-corrected absorption coefficient.
+    :param wavelength_dim: The wavelength dimension name for a_mts.
+    :return: The reference wavelength in nm.
+    """
+    wvl_idxs = xr.apply_ufunc(_estimate_reference_wavelength_index,
+                              a_mts,
+                              input_core_dims=[[wavelength_dim]],
+                              vectorize=True)
+    idxs, counts = np.unique(wvl_idxs, return_counts = True)
+    wvl_idx = idxs[np.nanargmax(counts)]
+    if np.isnan(wvl_idx):
+        raise ValueError('No reference wavelength found. Please check the spectra.')
+    wvl = float(a_mts[wavelength_dim].values[wvl_idx])
+    return wvl
