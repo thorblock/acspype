@@ -168,10 +168,17 @@ def gross_range_test(mts: xr.DataArray,
     :return: Flag indicating pass, fail, or suspect.
     """
 
-    mts = np.array(mts)
-    flag = np.where((mts < sensor_min) | (mts > sensor_max), FLAG.FAIL, FLAG.PASS)
-    flag = np.where((mts > op_min) | (mts < op_max), flag, FLAG.SUSPECT)
-    return flag
+    if not isinstance(mts, xr.DataArray):
+        raise NotImplementedError("Functionality for singletons not yet implemented.")
+
+    else:
+        flags = xr.full_like(mts, FLAG.NOT_EVALUATED).astype(int)
+        flags = flags.where((mts > sensor_min) & (mts < sensor_max), FLAG.FAIL)
+        flags = flags.where((mts > op_min) | (mts < sensor_min), FLAG.SUSPECT)
+        flags = flags.where((mts < op_max) | (mts > sensor_max), FLAG.SUSPECT)
+        flags = flags.where((mts <= op_min) | (mts >= op_max), FLAG.PASS)
+        return flags
+
 
 # TODO: Test below functions.
 #

@@ -12,7 +12,7 @@ PACKET_TAIL = 'Hx'  # struct descriptor for the static tail of a packet.
 LPR = len(PACKET_REGISTRATION)
 
 # ---------- File Creation ---------- #
-ENCODING = {'time': {'units': 'nanoseconds since 1900-01-01'}}  # xr.Dataset to netcdf encoding for time
+NC_ENCODING = {'time': {'units': 'nanoseconds since 1900-01-01'}}  # xr.Dataset to netcdf encoding for time
 
 # ---------- PHYSICAL QUANTITIES ---------- #
 EST_FLOW_CELL_VOLUME = 30  # in mL, from the ACS Protocol Document, Rev Q.

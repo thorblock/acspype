@@ -64,13 +64,13 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
               'id': 'uuid',
               'provenance': 'provenance_uuid',
               'internal_timestamp': 'internal_timestamp',
-              'beam_attenuation': 'c_m_discontinuity',
+              'beam_attenuation': 'beam_attenuation',
               'profiler_timestamp': 'profiler_timestamp',
               'internal_temp_raw': 'raw_internal_temperature',
               'ingestion_timestamp': 'ingestion_timestamp',
               'c_reference_dark_counts': 'c_reference_dark',
               'port_timestamp': 'port_timestamp',
-              'optical_absorption': 'a_m_discontinuity',
+              'optical_absorption': 'optical_absorption',
               'sea_water_practical_salinity': 'sea_water_practical_salinity',
               'on_seconds': 'elapsed_time',
               'elapsed_run_time': 'elapsed_time',
@@ -107,9 +107,10 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
             nds.attrs[attr] = ds.attrs[attr]
     nds.attrs['number_of_output_wavelengths'] = nwvls
 
-    # Drop confusing variables.
+    # Drop confusing variables or variables we will reprocess to.
     vars_to_drop = ['driver_timestamp', 'uuid', 'provenance_uuid', 'internal_timestamp', 'ingestion_timestamp',
-                    'profiler_timestamp', 'port_timestamp', 'preferred_timestamp', 'suspect_timestamp', 'raw_pressure']
+                    'profiler_timestamp', 'port_timestamp', 'preferred_timestamp', 'suspect_timestamp', 'raw_pressure',
+                    'optical_absorption','beam_attenuation']
     nds = nds.drop_vars(vars_to_drop, errors='ignore')
 
     # Reorder variables alphabetically for convenience.
@@ -203,13 +204,15 @@ def get_ooi_optaa_cal(ds: xr.Dataset) -> object:
             return dev
 
 
-def download_and_load_goldcopy(thredds_fileserver_url: str, save_dir: str = 'ooi_data/') -> xr.Dataset:
+def download_and_load_goldcopy(thredds_fileserver_url: str,
+                               save_dir: str = 'ooi_data/') -> xr.Dataset:
     """
     Download and load a dataset from the OOI THREDDS GoldCopy catalog.
     Sometimes data accessed through the OpenDAP URL is incomplete, so downloading is recommended.
 
     :param thredds_fileserver_url: A THREDDS GoldCopy URL. Must be fileServer, not dodsC.
     :param save_dir: The directory to save the dataset to.
+    :param delete_on_load: If True, delete the file after loading it.
     :return: The xarray dataset.
     """
     os.makedirs(save_dir, exist_ok=True)
