@@ -16,7 +16,6 @@ https://github.com/IanTBlack/acspype/blob/main/info/NAMING_CONVENTIONS.md
 
 """
 
-
 from collections.abc import Callable
 import numpy as np
 from numpy.typing import NDArray
@@ -169,13 +168,14 @@ def compute_uncorrected(signal_counts: tuple[int, ...] | NDArray[float] | xr.Dat
         uncorr.attrs['path_length'] = path_length
     return uncorr
 
+
 def compute_measured(uncorrected: NDArray[float] | xr.DataArray,
                      internal_temperature: float | xr.DataArray,
                      offset: NDArray[float],
                      func_delta_t: Callable) -> NDArray[float] | xr.DataArray:
-
     """
-    Compute the measured absorption or attenuation coefficient from the uncorrected coefficient and the internal temperature.
+    Compute the measured absorption or attenuation coefficient from the uncorrected coefficient
+    and the internal temperature.
 
     :param uncorrected: The uncorrected absorption or attenuation coefficient.
         Typically computed via compute_uncorrected().
@@ -243,7 +243,7 @@ def _compute_discontinuity_offset(measured: NDArray[float],
     else:
         cubic_spline = CubicSpline(x, y)
         interp = cubic_spline(wavelength[disc_idx + 1], extrapolate=True)
-        offset = round((interp - measured[disc_idx + 1]),5)
+        offset = round((interp - measured[disc_idx + 1]), 5)
         return offset
 
 
@@ -308,10 +308,10 @@ def apply_discontinuity_offset(measured, disc_off, disc_idx, wavelength_dim):
         disc_applied = _apply_discontinuity_offset(measured, disc_off, disc_idx)
     else:
         disc_applied = xr.apply_ufunc(_apply_discontinuity_offset, measured, disc_off,
-                            kwargs = {'disc_idx': disc_idx},
-                            input_core_dims=[[wavelength_dim],[]],
-                            output_core_dims = [[wavelength_dim]],
-                            vectorize = True)
+                                      kwargs={'disc_idx': disc_idx},
+                                      input_core_dims=[[wavelength_dim], []],
+                                      output_core_dims=[[wavelength_dim]],
+                                      vectorize=True)
 
         # Assign attributes if output is an xr.DataArray.
         disc_applied.attrs['discontinuity_index'] = disc_idx
@@ -319,7 +319,7 @@ def apply_discontinuity_offset(measured, disc_off, disc_idx, wavelength_dim):
 
 
 def discontinuity_correction(measured: xr.DataArray,
-                             discontinuity_index: xr.DataArray,
+                             discontinuity_index: int,
                              wavelength_dim: str) -> tuple[xr.DataArray, xr.DataArray]:
     """
     Compute the discontinuity offset and apply it to the measured coefficient.
@@ -334,7 +334,7 @@ def discontinuity_correction(measured: xr.DataArray,
     disc_offset = compute_discontinuity_offset(measured, measured[wavelength_dim].values,
                                                discontinuity_index, wavelength_dim)
     disc_applied = apply_discontinuity_offset(measured, disc_offset,
-                                              discontinuity_index,  wavelength_dim)
+                                              discontinuity_index, wavelength_dim)
     return disc_applied, disc_offset
 
 
@@ -359,17 +359,16 @@ def ts_correction(measured: NDArray[float] | xr.DataArray,
     :return: TS-corrected absorption or attenuation coefficient in m^-1.
     """
 
-
     if not isinstance(measured, xr.DataArray):
-        dT = temperature - tcal
+        dt = temperature - tcal
         psi_t = psi_temperature
         psi_s = psi_salinity
         s = salinity
-        mts = measured - ((psi_t * dT) + (psi_s * s))
+        mts = measured - ((psi_t * dt) + (psi_s * s))
     else:
-        dT, psi_t = np.meshgrid(temperature - tcal, psi_temperature)
+        dt, psi_t = np.meshgrid(temperature - tcal, psi_temperature)
         s, psi_s = np.meshgrid(salinity, psi_salinity)
-        mts = measured - ((psi_t.T * dT.T) + (psi_s.T * s.T))
+        mts = measured - ((psi_t.T * dt.T) + (psi_s.T * s.T))
 
     if isinstance(mts, xr.DataArray):
         # Assign attributes if output is an xr.DataArray.
@@ -401,7 +400,7 @@ def interpolate_common_wavelengths(ds: xr.Dataset,
                                    a_wavelength_dim: str = 'a_wavelength',
                                    c_wavelength_dim: str = 'c_wavelength',
                                    new_wavelength_dim: str = 'wavelength',
-                                   wavelength_range: list or str = 'infer', step: int = 1,) -> xr.Dataset:
+                                   wavelength_range: list or str = 'infer', step: int = 1, ) -> xr.Dataset:
     """
     This function interpolates the absorption and attenuation spectra to a common wavelength range and step size.
     Only works on xarray Datasets.
@@ -410,6 +409,8 @@ def interpolate_common_wavelengths(ds: xr.Dataset,
     :param ds: The input dataset with two wavelength dimensions, one for absorption and the other for attenuation.
     :param a_wavelength_dim: The name of the absorption wavelength dimension.
     :param c_wavelength_dim: The name of the attenuation wavelength dimension.
+    :param new_wavelength_dim: The name of the new wavelength dimension to be created.
+        Default is 'wavelength', which is the recommended name for the common wavelength dimension.
     :param wavelength_range: The wavelength range to interpolate along.
         Default is 'infer', which will use the minimums and maximums of the absorption and attenuation wavelengths to
         identify a common range for both channels.
@@ -420,8 +421,8 @@ def interpolate_common_wavelengths(ds: xr.Dataset,
     """
 
     if wavelength_range == 'infer':
-        min_wvl = np.ceil(max(ds[a_wavelength_dim].min(), ds[c_wavelength_dim].min())) # Max of a and c wvl mins.
-        max_wvl = np.floor(min(ds[a_wavelength_dim].max(), ds[c_wavelength_dim].max())) # Min of a and c wvl maxs.
+        min_wvl = np.ceil(max(ds[a_wavelength_dim].min(), ds[c_wavelength_dim].min()))  # Max of a and c wvl mins.
+        max_wvl = np.floor(min(ds[a_wavelength_dim].max(), ds[c_wavelength_dim].max()))  # Min of a and c wvl maxs.
     else:
         min_wvl, max_wvl = wavelength_range
     wvls = np.arange(min_wvl, max_wvl, step)
@@ -434,8 +435,6 @@ def interpolate_common_wavelengths(ds: xr.Dataset,
     cds.attrs['wavelength_range'] = [min_wvl, max_wvl]
     cds.attrs['interpolation_step'] = step
     return cds
-
-
 
 
 def baseline_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
@@ -458,7 +457,7 @@ def baseline_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
 
 
 def fixed_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
-                                c_mts: NDArray[float] | xr.DataArray, 
+                                c_mts: NDArray[float] | xr.DataArray,
                                 epsilon: float = 0.14) -> NDArray[float] | xr.DataArray:
     """
     Perform fixed scattering correction on the absorption coefficient.
@@ -473,7 +472,7 @@ def fixed_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
 
     scatcorr = a_mts - epsilon * (c_mts - a_mts)
 
-    if isinstance(scatcorr, xr.DataArray):         # Assign attributes if output is an xr.DataArray.
+    if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xr.DataArray.
         scatcorr.attrs['ancillary_variables'] = ', '.join([a_mts.name, c_mts.name])
         scatcorr.attrs['epsilon'] = epsilon
 
@@ -497,14 +496,14 @@ def proportional_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
 
     scatcorr = a_mts - ((reference_a / (reference_c - reference_a)) * (c_mts - a_mts))
 
-    if isinstance(scatcorr, xr.DataArray):    # Assign attributes if output is an xr.DataArray.
+    if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xr.DataArray.
         scatcorr.attrs['ancillary_variables'] = ', '.join([a_mts.name, c_mts.name])
 
     return scatcorr
 
 
 def baseline_plus_scattering_correction(a_mts: xr.DataArray,
-                                        a_mts_715: xr.DataArray,) -> xr.DataArray:
+                                        a_mts_715: xr.DataArray, ) -> xr.DataArray:
     """
     Perform baseline plus scattering correction for the absorption coefficient.
     This method originates from Rottgers et al. (2013). https://doi.org/10.1016/j.mio.2013.11.001
@@ -516,7 +515,7 @@ def baseline_plus_scattering_correction(a_mts: xr.DataArray,
     """
 
     true_a_715 = 0.212 * np.pow(a_mts_715, 1.135)  # Equation 5 from Rottgers et al. (2013)
-    scatcorr = a_mts - (a_mts_715 - true_a_715) # Equation 3 from Rottgers et al. (2013)
+    scatcorr = a_mts - (a_mts_715 - true_a_715)  # Equation 3 from Rottgers et al. (2013)
 
     if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xr.DataArray.
         scatcorr.attrs['ancillary_variables'] = ', '.join([a_mts.name])
@@ -530,7 +529,6 @@ def proportional_plus_scattering_correction(a_mts: xr.DataArray,
                                             a_mts_715: xr.DataArray,
                                             c_mts_715: xr.DataArray,
                                             e_c: float = 0.56) -> xr.DataArray:
-
     """
     Perform proportional plus scattering correction for the absorption coefficient.
     This method originates from Rottgers et al. (2013). https://doi.org/10.1016/j.mio.2013.11.001
@@ -542,6 +540,7 @@ def proportional_plus_scattering_correction(a_mts: xr.DataArray,
     :param a_mts: The TS-corrected absorption coefficient.
     :param c_mts: The TS-corrected attenuation coefficient.
     :param a_mts_715: The absorption at the reference wavelength. Historically, 715nm is used.
+    :param c_mts_715: The attenuation at the reference wavelength. Historically, 715nm is used.
     :param e_c: The attenuation correction factor. Normally it is 1 (no attenuation correction),
         but Rottgers et al. (2013) suggest a value of 0.56 when running wavelength independent correction (which this
         function does).
@@ -549,9 +548,10 @@ def proportional_plus_scattering_correction(a_mts: xr.DataArray,
     """
 
     true_a_715 = 0.212 * np.pow(a_mts_715, 1.135)  # EQ5 from Rottgers et al. (2013)
-    scatcorr = a_mts - (a_mts_715 - true_a_715) * (((1/e_c) * c_mts - a_mts)/((1/e_c) * c_mts_715 - true_a_715)) # EQ4
+    scatcorr = a_mts - (a_mts_715 - true_a_715) * (
+                ((1 / e_c) * c_mts - a_mts) / ((1 / e_c) * c_mts_715 - true_a_715))  # EQ4
 
-    if isinstance(scatcorr, xr.DataArray):    # Assign attributes if output is an xr.DataArray.
+    if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xr.DataArray.
         scatcorr.attrs['ancillary_variables'] = ', '.join([a_mts.name, c_mts.name])
         scatcorr.attrs['reference_wavelength'] = 715
         scatcorr.attrs['scattering_correction_method'] = 'Proportional+ , Rottgers et al. (2013)'
@@ -568,8 +568,8 @@ def _estimate_reference_wavelength_index(a_spectra: np.array) -> int:
     :return: The index of the reference wavelength.
     """
     num_wvls = len(a_spectra)
-    len_non_reds = len(a_spectra[:int(num_wvls*3/4)])
-    reds = a_spectra[int(num_wvls*3/4):]
+    len_non_reds = len(a_spectra[:int(num_wvls * 3 / 4)])
+    reds = a_spectra[int(num_wvls * 3 / 4):]
     reds_pos = np.where(reds < 0, np.nan, reds)
     if np.all(np.isnan(reds_pos)):
         return np.nan
@@ -592,7 +592,7 @@ def estimate_reference_wavelength(a_mts: xr.DataArray, wavelength_dim: str) -> f
                               a_mts,
                               input_core_dims=[[wavelength_dim]],
                               vectorize=True)
-    idxs, counts = np.unique(wvl_idxs, return_counts = True)
+    idxs, counts = np.unique(wvl_idxs, return_counts=True)
     wvl_idx = idxs[np.nanargmax(counts)]
     if np.isnan(wvl_idx):
         raise ValueError('No reference wavelength found. Please check the spectra.')

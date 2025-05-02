@@ -28,16 +28,15 @@ TEST_PACKET = (b'\xff\x00\xff\x00\x02\xc0\x05\x01S\x00\x00\x0b\x01\xd0\x00\x00"\
                b'\xb7()&\xfc-\x1cB5%r$D*\x03=\xb6"\xe7!\xb3\'19x \\\x1f2$\\5E\x1e\x18\x1c\xf1!\xc81\x82\x1c\x07\x1a'
                b'\xd8\x1f\x8b.\x03\x19\xe8\x18\xb6\x1d\x1b*r\xf8\xad\x00')
 
-TEST_TEMPERATURE = 12.345 # Dummy temperature.
-TEST_SALINITY = 34.567 # Dummy salinity.
+TEST_TEMPERATURE = 12.345  # Dummy temperature.
+TEST_SALINITY = 34.567  # Dummy salinity.
 
 
 def test():
     dev = ACSDev('../dev_tools/test_files/ACS-00011_2022-10-20.dev')
 
-    acs_packet = ACSPacket(daq_time = TEST_TIME, full_packet=TEST_PACKET)
+    acs_packet = ACSPacket(daq_time=TEST_TIME, full_packet=TEST_PACKET)
     assert syntax_test(acs_packet.full_packet) == FLAG.OK
-
 
     parsed_packet = parse_packet(acs_packet)
 
@@ -45,7 +44,3 @@ def test():
     assert dev.serial_number == calibrated_packet.serial_number
 
     ts_corrected_packet = ts_correct_packet(calibrated_packet, TEST_TEMPERATURE, TEST_SALINITY, dev)
-
-
-
-

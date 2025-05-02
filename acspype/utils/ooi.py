@@ -29,7 +29,8 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     nwvls = int(np.unique(ds.num_wavelengths))
     ds = ds.drop_vars(['a_wavelength', 'c_wavelength', 'num_wavelengths'], errors='ignore')
 
-    # Pull out lat/lon. No OOI OPTAA dataset is currently mobile, so assign a static latitude and longitude to the entire dataset.
+    # Pull out lat/lon.
+    # No OOI OPTAA dataset is currently mobile, so assign a static latitude and longitude to the entire dataset.
     lat = np.unique(ds.lat)
     lon = np.unique(ds.lon)
     ds = ds.drop_vars(['lat', 'lon'], errors='ignore')
@@ -48,7 +49,7 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     for var in ds.data_vars:
         if var in ['a_signal_counts', 'a_reference_counts', 'optical_absorption']:
             nds[var] = (['time', 'a_wavelength'], ds[var].data)
-        elif var in ['c_signal_counts', 'c_reference_counts','beam_attenuation']:
+        elif var in ['c_signal_counts', 'c_reference_counts', 'beam_attenuation']:
             nds[var] = (['time', 'c_wavelength'], ds[var].data)
         else:
             nds[var] = (['time'], ds[var].data)
@@ -84,7 +85,7 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     for key, value in mapper.items():
         try:
             nds = nds.rename({key: value})
-            nds[value].attrs =  ds[key].attrs
+            nds[value].attrs = ds[key].attrs
         except:
             continue
 
@@ -100,15 +101,15 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
 
     # Reassign attributes
     for attr in sorted(ds.attrs):
-        if ds.attrs[attr] in ['','[]']:
+        if ds.attrs[attr] in ['', '[]']:
             continue
         else:
             nds.attrs[attr] = ds.attrs[attr]
     nds.attrs['number_of_output_wavelengths'] = nwvls
 
     # Drop confusing variables.
-    vars_to_drop = ['driver_timestamp','uuid','provenance_uuid','internal_timestamp','ingestion_timestamp',
-                    'profiler_timestamp','port_timestamp','preferred_timestamp','suspect_timestamp', 'raw_pressure']
+    vars_to_drop = ['driver_timestamp', 'uuid', 'provenance_uuid', 'internal_timestamp', 'ingestion_timestamp',
+                    'profiler_timestamp', 'port_timestamp', 'preferred_timestamp', 'suspect_timestamp', 'raw_pressure']
     nds = nds.drop_vars(vars_to_drop, errors='ignore')
 
     # Reorder variables alphabetically for convenience.
@@ -117,12 +118,11 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     return nds
 
 
-
 def build_acpype_dev_obj(response_data, start) -> object:
     """
     Build an ACSDev-like object for processing OOI OPTAA data with _acspype.
 
-    :param response_data: The response from a uid request to the OOI API.
+    :param response_data: The response from an UID request to the OOI API.
     :param start: The start time of dataset, used to find the most recent calibration.
     :return: An ACSDev-like class object.
     """
@@ -146,7 +146,6 @@ def build_acpype_dev_obj(response_data, start) -> object:
             cname = 'c_wavelength'
         elif cal['name'] == 'CC_tbins':
             cname = 'tbins'
-        coeff_name = cname
         subcals = cal['calData']
         matching_cals = {}
         for subcal in subcals:
@@ -159,7 +158,7 @@ def build_acpype_dev_obj(response_data, start) -> object:
         cal_dates = list(matching_cals.keys())
         diffs = [start - cd for cd in cal_dates]
         matching_dt = cal_dates[np.argmin(diffs)]
-        cal_data[coeff_name] = matching_cals[matching_dt]
+        cal_data[cname] = matching_cals[matching_dt]
 
     class Dev:
         # Simulate an ACSDev object.
@@ -176,9 +175,8 @@ def build_acpype_dev_obj(response_data, start) -> object:
 
         # func_a_delta_t = interpolate.interp1d(cal_data['tbins'], cal_data['a_delta_t'], axis=1)
         # func_c_delta_t = interpolate.interp1d(cal_data['tbins'], cal_data['c_delta_t'], axis=1)
-        func_a_delta_t = make_interp_spline(cal_data['tbins'], cal_data['a_delta_t'], k = 1, axis = 1)
-        func_c_delta_t = make_interp_spline(cal_data['tbins'], cal_data['c_delta_t'], k = 1, axis = 1)
-
+        func_a_delta_t = make_interp_spline(cal_data['tbins'], cal_data['a_delta_t'], k=1, axis=1)
+        func_c_delta_t = make_interp_spline(cal_data['tbins'], cal_data['c_delta_t'], k=1, axis=1)
 
     return Dev
 
@@ -211,6 +209,7 @@ def download_and_load_goldcopy(thredds_fileserver_url: str, save_dir: str = 'ooi
     Sometimes data accessed through the OpenDAP URL is incomplete, so downloading is recommended.
 
     :param thredds_fileserver_url: A THREDDS GoldCopy URL. Must be fileServer, not dodsC.
+    :param save_dir: The directory to save the dataset to.
     :return: The xarray dataset.
     """
     os.makedirs(save_dir, exist_ok=True)
@@ -220,11 +219,11 @@ def download_and_load_goldcopy(thredds_fileserver_url: str, save_dir: str = 'ooi
         ds = xr.open_dataset(fp)
         return ds
     else:
-        with requests.get(thredds_fileserver_url, stream = True) as req:
+        with requests.get(thredds_fileserver_url, stream=True) as req:
             with open(fp, 'wb') as fileobj:
                 shutil.copyfileobj(req.raw, fileobj)
         if os.path.isfile(fp):
             ds = xr.open_dataset(fp)
             return ds
         else:
-            return FileNotFoundError
+            raise FileNotFoundError

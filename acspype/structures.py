@@ -13,7 +13,7 @@ import xarray as xr
 
 class ACSPacket(NamedTuple):
     daq_time: datetime
-    full_packet: bytes
+    full_packet: bytes | bytearray | None
 
     def to_dict(self) -> dict:
         """Export the ACSPacket as a dictionary."""
@@ -49,11 +49,9 @@ class ParsedPacket(NamedTuple):
     a_signal: tuple[int, ...]
     checksum: int
 
-
     def to_dict(self) -> dict:
         """Export the ParsedPacket as a dictionary."""
         return self._asdict()
-
 
     def to_xarray(self) -> xr.Dataset:
         """Export the ParsedPacket as an xr.Dataset."""
@@ -100,10 +98,8 @@ class DeviceCalibratedPacket(NamedTuple):
     a_m: ArrayLike
     c_m: ArrayLike
 
-
     def to_dict(self) -> dict:
         return self._asdict()
-
 
     def to_xarray(self) -> xr.Dataset:
         ds = xr.Dataset()
@@ -135,10 +131,8 @@ class TSCorrectedPacket(NamedTuple):
     a_mts: ArrayLike
     c_mts: ArrayLike
 
-
     def to_dict(self) -> dict:
         return self._asdict()
-
 
     def to_xarray(self) -> xr.Dataset:
         ds = xr.Dataset()

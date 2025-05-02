@@ -32,12 +32,11 @@ def find_acs_port(baudrate: int = 115200,
     available_ports = list_available_ports()
     for port in available_ports:
         try:
-            with serial.Serial(port = port, baudrate=baudrate, timeout=timeout) as ser:
+            with serial.Serial(port=port, baudrate=baudrate, timeout=timeout) as ser:
                 time.sleep(check_length)
                 incoming = ser.read(ser.in_waiting)
             if PACKET_REGISTRATION in incoming:
                 return port
-        except:
+        except:  # Bare exceptions don't follow PEP 8: E772, but do we really care?
             continue
     raise ConnectionAbortedError('No ACS detected. Is the sensor connected and on?')
-

@@ -8,7 +8,6 @@ from acspype.dev import ACSDev
 
 
 class ACSStream():
-
     BAUDRATE: int = 115200
     BYTESIZE: int = 8
     PARITY: str = 'N'
@@ -29,8 +28,7 @@ class ACSStream():
         """
 
         self.clear_packet_buffer()
-        self.reset_serial(port = port, baudrate = baudrate, timeout=timeout)
-
+        self.reset_serial(port=port, baudrate=baudrate, timeout=timeout)
 
     def clear_serial_buffers(self) -> None:
         """
@@ -40,14 +38,12 @@ class ACSStream():
         self._serial.reset_input_buffer()
         self._serial.reset_output_buffer()
 
-
     def clear_packet_buffer(self):
         """
         Clear the packet buffer that is currently in memory.
         :return: None
         """
         self._buffer = bytearray()
-
 
     def reset_serial(self, port: str,
                      baudrate: int,
@@ -78,7 +74,6 @@ class ACSStream():
         self._serial.xonxoff = int(flowcontrol)
         self._serial.timeout = int(timeout)
 
-
     def connect(self) -> None:
         """
         Attempt to connect to the port assigned at class instantiation.
@@ -91,7 +86,6 @@ class ACSStream():
         except ConnectionError:
             raise serial.PortNotOpenError()
 
-
     def disconnect(self) -> None:
         """
         Disconnect from the port assigned at class instantiation.
@@ -103,7 +97,6 @@ class ACSStream():
         self._serial.close()
         self.clear_packet_buffer()
 
-
     def read_stream(self) -> None:
         """
         Read the current number of bytes waiting in the serial port buffer and append them to a byte array in memory.
@@ -113,7 +106,6 @@ class ACSStream():
 
         incoming = self._serial.read(self._serial.in_waiting)
         self._buffer.extend(incoming)
-
 
     def find_packet(self) -> ACSPacket:
         """
@@ -133,7 +125,6 @@ class ACSStream():
             acs_packet = ACSPacket(daq_time=daq_time, full_packet=None)
         return acs_packet
 
-
     def __enter__(self) -> object:
         """
         Context Manager: Automatically connect to the assigned port number when used in a "with" statement.
@@ -143,7 +134,6 @@ class ACSStream():
 
         self.connect()
         return self
-
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         """
@@ -157,20 +147,17 @@ class ACSStream():
 
         self.disconnect()
 
-
     def parse_packet(self, acs_packet: ACSPacket) -> ParsedPacket:
         """ACSStream wrapper for the parse_packet function inherited from the packet module."""
         parsed_packet = parse_packet(acs_packet)
         return parsed_packet
 
-
-    def calibrate_packet(self, parsed_packet, dev:ACSDev) -> DeviceCalibratedPacket:
+    def calibrate_packet(self, parsed_packet, dev: ACSDev) -> DeviceCalibratedPacket:
         """ACSStream wrapper for the calibrate_packet function inherited from the packet module."""
         dev_cal_packet = calibrate_packet(parsed_packet, dev)
         return dev_cal_packet
 
-
-    def ts_correct_packet(self, dev_cal_packet, temperature, salinity, dev:ACSDev) -> TSCorrectedPacket:
+    def ts_correct_packet(self, dev_cal_packet, temperature, salinity, dev: ACSDev) -> TSCorrectedPacket:
         """ACSStream wrapper for the ts_correct_packet function inherited from the packet module."""
         ts_corrected_packet = ts_correct_packet(dev_cal_packet, temperature, salinity, dev)
         return ts_corrected_packet

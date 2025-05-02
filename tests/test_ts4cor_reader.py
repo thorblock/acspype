@@ -8,4 +8,3 @@ def test():
     assert len(tscor.wavelengths) == len(tscor.psi_t)
     assert len(tscor.wavelengths) == len(tscor.psi_s_c)
     assert len(tscor.wavelengths) == len(tscor.psi_s_a)
-

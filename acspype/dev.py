@@ -31,7 +31,6 @@ class ACSDev:
         self.__build_interp_funcs()
         self.__check_parse()
 
-
     def __read_dev(self) -> None:
         """
         Import the .dev file as a text file.
@@ -42,7 +41,6 @@ class ACSDev:
 
         with open(self._filepath, 'r') as _file:
             self._content = _file.readlines()
-
 
     def __parse_metadata(self) -> None:
         """
@@ -85,7 +83,6 @@ class ACSDev:
                  self.min_c_counts, self.min_r_counts, self.max_temp_sd,
                  self.max_depth_sd) = [float(v) for v in re.findall(f'({NUM_PAT})\t', line)]
 
-
     def __parse_tbins(self) -> None:
         """
         Parse the .dev file for temperature bin information.
@@ -96,8 +93,7 @@ class ACSDev:
         tbins = tbin_line.split('\t')
         tbins = [v for v in tbins if v]  # Toss empty strings.
         tbins = [v for v in tbins if v != '\n']  # Toss newline characters.
-        self.tbin = np.array([float(v) for v in tbins if 'temperature bins' not in v]) # Convert to float.
-
+        self.tbin = np.array([float(v) for v in tbins if 'temperature bins' not in v])  # Convert to float.
 
     def __parse_offsets(self) -> None:
         """
@@ -147,7 +143,6 @@ class ACSDev:
         self.a_delta_t = np.array(a_deltas)
         self.wavelength_color_schemes = wavelength_color_schemes
 
-
     def __build_interp_funcs(self) -> None:
         """
         Build interpolation functions for the a and c delta_t values and store as class attributes.
@@ -160,10 +155,9 @@ class ACSDev:
         # self.func_a_delta_t = interpolate.interp1d(self.tbin, self.a_delta_t, axis=1)
         # self.func_c_delta_t = interpolate.interp1d(self.tbin, self.c_delta_t, axis=1)
 
-        self.func_a_delta_t = make_interp_spline(self.tbin, self.a_delta_t, k = 1, axis = 1)
-        self.func_c_delta_t = make_interp_spline(self.tbin, self.c_delta_t, k = 1, axis = 1)
+        self.func_a_delta_t = make_interp_spline(self.tbin, self.a_delta_t, k=1, axis=1)
+        self.func_c_delta_t = make_interp_spline(self.tbin, self.c_delta_t, k=1, axis=1)
         self.delta_t_interp_method = 'scipy.interpolate.make_interp_spline'
-
 
     def __check_parse(self) -> None:
         """
@@ -187,7 +181,6 @@ class ACSDev:
         if np.array(self.c_delta_t).shape != (len(self.a_wavelength), self.num_tbin):
             raise ValueError('Mismatch between length of C wavelengths and number of temperature bins.'
                              'Please verify the .dev file integrity.')
-
 
     def to_xarray(self) -> xr.Dataset:
         """

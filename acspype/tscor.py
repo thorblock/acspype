@@ -13,7 +13,6 @@ class ACSTSCor:
         self.psi_t = list(map(lambda x: x[1]['psi_t'], TS4COR.items()))
         self.method = 'Sullivan et al., 2006'
 
-
     def to_xarray(self):
         ds = xr.Dataset()
         ds = ds.assign_coords({'wavelength': np.array(self.wavelengths)})
@@ -45,7 +44,6 @@ class ACSTS4CorReader:
         self.__parse_lines()
         self.method = 'Sullivan et al., 2006'
 
-
     def __read_cor(self) -> None:
         """
         Read .cor file and store lines as a class attribute.
@@ -55,7 +53,6 @@ class ACSTS4CorReader:
 
         with open(self.filepath, 'r') as _file:
             self._lines = _file.readlines()
-
 
     def __parse_lines(self) -> None:
         """
@@ -87,7 +84,6 @@ class ACSTS4CorReader:
             self.psi_s_c = np.array(psi_s_c)
             self.psi_s_a = np.array(psi_s_a)
 
-
     def to_xarray(self):
         ds = xr.Dataset()
         ds = ds.assign_coords({'wavelength': np.array(self.wavelengths)})
@@ -97,5 +93,3 @@ class ACSTS4CorReader:
 
         ds.attrs['tscor_data'] = self.method
         return ds
-
-

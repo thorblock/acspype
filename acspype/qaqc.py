@@ -1,13 +1,13 @@
 from datetime import timedelta
 import numpy as np
 from numpy.typing import NDArray
-from struct import unpack_from, calcsize
+from struct import calcsize
 import xarray as xr
 
-from acspype.core import (WVL_BYTE_OFFSET, PACKET_HEAD, PACKET_TAIL, LPR, 
-                          NUM_CHECKSUM_BYTES, PACKET_REGISTRATION, PAD_BYTE)
+from acspype.core import (PACKET_HEAD, PACKET_TAIL, LPR, PACKET_REGISTRATION, PAD_BYTE)
 from acspype.dev import ACSDev
 from acspype.packet import unpack_packet
+
 
 class FLAG:
     OK: int = 1
@@ -19,8 +19,8 @@ class FLAG:
     MISSING_DATA: int = 9
 
 
-def gap_test(now, time_stmp, buffer_length, record_length, time_inc = 0.25):
-    if now - time_stmp > timedelta(seconds = time_inc): # Defined in QARTOD Ocean Optics Manual.
+def gap_test(now, time_stmp, buffer_length, record_length, time_inc=0.25):
+    if now - time_stmp > timedelta(seconds=time_inc):  # Defined in QARTOD Ocean Optics Manual.
         return FLAG.FAIL
     elif buffer_length > record_length:
         """
@@ -67,7 +67,6 @@ def syntax_test(full_packet: bytearray) -> int:
             return FLAG.PASS
     else:
         return FLAG.PASS
-
 
 
 def elapsed_time_test(elapsed_time: int | xr.DataArray, fail_threshold: int = 1000 * 60,
@@ -144,14 +143,14 @@ def inf_nan_test(uncorrected: NDArray[float] | xr.DataArray) -> int | xr.DataArr
             return FLAG.PASS
     else:
         flags = xr.full_like(uncorrected.time.astype(int), FLAG.PASS).astype(int)
-        flags = xr.where((np.any(np.isinf(uncorrected),axis = 1)), FLAG.FAIL, flags)
-        flags = xr.where((np.any(np.isnan(uncorrected), axis = 1)), FLAG.FAIL, flags)
+        flags = xr.where((np.any(np.isinf(uncorrected), axis=1)), FLAG.FAIL, flags)
+        flags = xr.where((np.any(np.isnan(uncorrected), axis=1)), FLAG.FAIL, flags)
         return flags
 
 
 def gross_range_test(mts: xr.DataArray,
                      sensor_min: float = -0.005, sensor_max: float = 10.00,
-                     op_min: float =0.001,  op_max: float = 8.5) -> xr.DataArray:
+                     op_min: float = 0.001, op_max: float = 8.5) -> xr.DataArray:
     """
     Assess if the TS-corrected data are within the limitations of the instrument. From the ACS manual, the valid range
     of the sensor is 0-10 m^-1.
@@ -173,7 +172,6 @@ def gross_range_test(mts: xr.DataArray,
     flag = np.where((mts < sensor_min) | (mts > sensor_max), FLAG.FAIL, FLAG.PASS)
     flag = np.where((mts > op_min) | (mts < op_max), flag, FLAG.SUSPECT)
     return flag
-
 
 # TODO: Test below functions.
 #

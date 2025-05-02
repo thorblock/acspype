@@ -12,7 +12,7 @@ def compute_alh_676(a_p_650: xr.DataArray, a_p_676: xr.DataArray, a_p_715: xr.Da
     :return: Absorption line height at 676 nm in m^-1.
     """
 
-    alh = (a_p_676 - (39/65 * a_p_650) + (26/65 * a_p_715))
+    alh = (a_p_676 - (39 / 65 * a_p_650) + (26 / 65 * a_p_715))
     return alh
 
 
@@ -32,9 +32,9 @@ def estimate_chl(a_p_650: xr.DataArray,
     :return: Chlorophyll-a concentration in mg/m^3.
     """
 
-    abl = ((a_p_715 - a_p_650) / (715 - 650)) * (676 - 650) + a_p_650  #EQ 1 in Roesler and Barnard 2013
-    alh = a_p_676 - abl  #EQ 2 in Roesler and Barnard 2013
-    chl_alh = alh / alh_star #EQ 3 in Roesler and Barnard 2013
+    abl = ((a_p_715 - a_p_650) / (715 - 650)) * (676 - 650) + a_p_650  # EQ 1 in Roesler and Barnard 2013
+    alh = a_p_676 - abl  # EQ 2 in Roesler and Barnard 2013
+    chl_alh = alh / alh_star  # EQ 3 in Roesler and Barnard 2013
     return chl_alh
 
 
@@ -53,17 +53,17 @@ def estimate_poc(c_p_660: xr.DataArray, slope_offset: str | tuple | list) -> xr.
     """
 
     if isinstance(slope_offset, str):
-        if slope_offset == 'gardner2006': # Gardner et al. 2006, Global, All Seasons
+        if slope_offset == 'gardner2006':  # Gardner et al. 2006, Global, All Seasons
             slope = 381
             offset = 9.4
-        elif slope_offset == 'stramski2008': # Stramski et al. 2008, Fall, Pacific, Atlantic
+        elif slope_offset == 'stramski2008':  # Stramski et al. 2008, Fall, Pacific, Atlantic
             slope = 458
             offset = 10.7
-        elif slope_offset == 'behrenfeld2006': # Behrenfeld and Boss 2006, Fall, Equatorial Pacific
+        elif slope_offset == 'behrenfeld2006':  # Behrenfeld and Boss 2006, Fall, Equatorial Pacific
             slope = 585
             offset = 7.6
-        elif slope_offset == 'goni2021': # Goni et al, 2021, August, Oregon Shelf/Slope
-            slope = 39.32 * 12.01 # 39.32 is the mean of values from W1108C, Table 11, Goni et al. 2021
+        elif slope_offset == 'goni2021':  # Goni et al, 2021, August, Oregon Shelf/Slope
+            slope = 39.32 * 12.01  # 39.32 is the mean of values from W1108C, Table 11, Goni et al. 2021
             offset = 0
     elif isinstance(slope_offset, tuple | list):
         slope, offset = slope_offset
