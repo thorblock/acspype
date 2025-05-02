@@ -1,15 +1,21 @@
 """
-This module contains functions that are used to process data from the ACS.
+This module contains functions that are used to process data from the ACS in real-time or as a batch process.
 
-Most functions can be used with both scalar values and 1D arrays or xarray DataArrays.
+Most functions are intended to be used with scalar values/1D arrays (e.g. data produced in real-time) or
+xarray DataArrays (e.g. mass processing of an ACS deployment).
 Scalar/1D inputs are intended to be used in the processing of a single packet or spectrum from the ACS.
-xarray DataArray implementation is intended to be used in the processing of multiple spectra already in an xarray Dataset.
-For calculations that are not immediately builtin to xarray,
+xr.DataArray implementation is intended to be used in the processing of multiple spectra already in an xr.Dataset.
+For computations that are not immediately builtin to xarray,
 the xarray.apply_ufunc function is used to apply the function that is denoted with a prepended underscore.
 
 It is strongly recommended that your xarray Dataset contain the coordinates/dimensions of
     time, a_wavelength, c_wavelength
+
+For a list of recommended coordinate/variable names for ACS data products, please see
+https://github.com/IanTBlack/acspype/blob/main/info/NAMING_CONVENTIONS.md
+
 """
+
 
 from collections.abc import Callable
 import numpy as np
@@ -34,19 +40,23 @@ def _convert_sn_hexdec(sn_int: int) -> str:
 def convert_sn_hexdec(sn_int: int | xr.DataArray) -> str | xr.DataArray:
     """
     Converts an integer representing an ACS serial number to the hexadecimal representation.
+    The function vectorizes _convert_sn_hexdec for xr.DataArray inputs.
 
     :param sn_int: An integer or xr.DataArray of integers representing the ACS serial number.
     :return: The hexadecimal representation of the serial number, not really as readable as the integer representation.
     """
 
-    if isinstance(sn_int, int):
-        return _convert_sn_hexdec(sn_int)
+    if not isinstance(sn_int, xr.DataArray):
+        sn_hexdec = _convert_sn_hexdec(sn_int)
     else:
         sn_hexdec = xr.apply_ufunc(_convert_sn_hexdec, sn_int,
                                    input_core_dims=[[]],
                                    output_core_dims=[[]],
                                    vectorize=True)
-        return sn_hexdec
+
+        # Assign attributes if output is an xr.DataArray.
+        sn_hexdec.attrs['ancillary_variables'] = sn_int.name
+    return sn_hexdec
 
 
 def _convert_sn_str(sn_int: int) -> str:
@@ -67,17 +77,22 @@ def _convert_sn_str(sn_int: int) -> str:
 def convert_sn_str(sn_int: int | xr.DataArray) -> str | xr.DataArray:
     """
     Converts an integer representing an ACS serial number to a string representation.
+    This function vectorizes _convert_sn_str for xr.DataArray inputs.
 
     :param sn_int: An integer or xr.DataArray of integers representing the ACS serial number.
     :return: The string representation of the serial number.
     """
-    if isinstance(sn_int, int):
+
+    if not isinstance(sn_int, xr.DataArray):
         return _convert_sn_str(sn_int)
     else:
         sn_str = xr.apply_ufunc(_convert_sn_str, sn_int,
                                 input_core_dims=[[]],
                                 output_core_dims=[[]],
                                 vectorize=True)
+
+        # Assign attributes if output is an xr.DataArray.
+        sn_str.attrs['ancillary_variables'] = sn_int.name
         return sn_str
 
 
@@ -86,7 +101,8 @@ def compute_internal_temperature(counts: int | xr.DataArray) -> float | xr.DataA
     Compute the internal temperature of the ACS from the counts of the internal temperature sensor.
 
     :param counts: Values of the internal temperature sensor, in counts.
-    :return: An xr.DataArray of the internal temperature in degrees Celsius.
+    :return: A float value if the input was a scalar counts value or an xr.DataArray of the internal temperature
+        if input as an xr.DataArray. Units of return are degrees Celsius.
     """
 
     a = 0.00093135
@@ -96,10 +112,13 @@ def compute_internal_temperature(counts: int | xr.DataArray) -> float | xr.DataA
     volts = 5 * counts / 65535
     resistance = 10000 * volts / (4.516 - volts)
     internal_temperature = 1 / (a + b * np.log(resistance) + c * np.log(resistance) ** 3) - d
-    if isinstance(counts, int):
-        return float(internal_temperature)
-    else:
-        return internal_temperature
+    if not isinstance(counts, xr.DataArray):
+        internal_temperature = float(internal_temperature)
+
+    # Assign attributes if output is an xr.DataArray.
+    if isinstance(internal_temperature, xr.DataArray):
+        internal_temperature.attrs['ancillary_variable'] = counts.name
+    return internal_temperature
 
 
 def compute_external_temperature(counts: int | xr.DataArray) -> float | xr.DataArray:
@@ -117,6 +136,12 @@ def compute_external_temperature(counts: int | xr.DataArray) -> float | xr.DataA
     c = -3.87065673e-03
     d = 95.8241397
     external_temperature = a * counts ** 3 + b * counts ** 2 + c * counts + d
+    if not isinstance(counts, xr.DataArray):
+        external_temperature = float(external_temperature)
+
+    # Assign attributes if output is an xr.DataArray.
+    if isinstance(external_temperature, xr.DataArray):
+        external_temperature.attrs['ancillary_variable'] = counts.name
     return external_temperature
 
 
@@ -137,15 +162,12 @@ def compute_uncorrected(signal_counts: tuple[int, ...] | NDArray[float] | xr.Dat
         signal_counts = np.array(signal_counts)
         reference_counts = np.array(reference_counts)
     uncorr = (1 / path_length) * np.log(signal_counts / reference_counts)
+
+    # Assign attributes if output is an xr.DataArray.
+    if isinstance(uncorr, xr.DataArray):
+        uncorr.attrs['ancillary_variables'] = ', '.join([signal_counts.name, reference_counts.name, 'path_length'])
+        uncorr.attrs['path_length'] = path_length
     return uncorr
-
-def compute_total(uncorrected: NDArray[float] | xr.DataArray, internal_temperature: float | xr.DataArray, func_delta_t: Callable) -> NDArray[float] | xr.DataArray:
-    if not isinstance(uncorrected, xr.DataArray):
-        total = uncorrected - func_delta_t(internal_temperature)
-    else:
-        total = uncorrected - func_delta_t(internal_temperature).T
-    return total
-
 
 def compute_measured(uncorrected: NDArray[float] | xr.DataArray,
                      internal_temperature: float | xr.DataArray,
@@ -168,7 +190,17 @@ def compute_measured(uncorrected: NDArray[float] | xr.DataArray,
     if not isinstance(uncorrected, xr.DataArray):
         measured = (offset - uncorrected) - func_delta_t(internal_temperature)
     else:
+        # Something weird happens when using BSpline, so the transposition is necessary to get the right shape.
         measured = (offset - uncorrected) - func_delta_t(internal_temperature).T
+
+    if isinstance(measured, xr.DataArray):
+        # Assign attributes if output is an xr.DataArray.
+
+        measured.attrs['ancillary_variables'] = ', '.join([uncorrected.name,
+                                                           internal_temperature.name,
+                                                           'device_file_offset'])
+        measured.attrs['func_delta_t'] = 'scipy.interpolate.make_interp_spline'
+        measured.attrs['func_delta_t_k_value'] = '1'
     return measured
 
 
@@ -179,8 +211,8 @@ def find_discontinuity_index(a_wavelength: NDArray[float],
     Find the wavelength index of the discontinuity in the absorption and attenuation spectra. The discontinuity is
     in the range of 535-600nm.
 
-    :param a_wavelengths: The absorption wavelengths of the ACS.
-    :param c_wavelengths: The attenuation wavelengths of the ACS.
+    :param a_wavelength: The absorption wavelengths of the ACS.
+    :param c_wavelength: The attenuation wavelengths of the ACS.
     :param min_wvl: Default is 535 nm. Can be adjusted if the discontinuity is not in the expected range.
     :param max_wvl: Default is 600 nm. Can be adjusted if the discontinuity is not in the expected range.
     :return: The index of the discontinuity in the absorption and attenuation spectra.
@@ -211,7 +243,7 @@ def _compute_discontinuity_offset(measured: NDArray[float],
     else:
         cubic_spline = CubicSpline(x, y)
         interp = cubic_spline(wavelength[disc_idx + 1], extrapolate=True)
-        offset = round(interp - measured[disc_idx + 1],5)
+        offset = round((interp - measured[disc_idx + 1]),5)
         return offset
 
 
@@ -236,6 +268,9 @@ def compute_discontinuity_offset(measured: NDArray[float] | xr.DataArray,
                                   input_core_dims=[[wavelength_dim]],
                                   output_core_dims=[[]],
                                   vectorize=True)
+
+        # Assign attributes if output is an xr.DataArray.
+        disc_off.attrs['discontinuity_index'] = disc_idx
     return disc_off
 
 
@@ -276,6 +311,9 @@ def apply_discontinuity_offset(measured, disc_off, disc_idx, wavelength_dim):
                             input_core_dims=[[wavelength_dim],[]],
                             output_core_dims = [[wavelength_dim]],
                             vectorize = True)
+
+        # Assign attributes if output is an xr.DataArray.
+        disc_applied.attrs['discontinuity_index'] = disc_idx
     return disc_applied
 
 
@@ -291,6 +329,7 @@ def discontinuity_correction(measured: xr.DataArray,
     :param wavelength_dim: The wavelength dimension of the measured coefficient if inputting an xarray DataArray.
     :return:
     """
+
     disc_offset = compute_discontinuity_offset(measured, measured[wavelength_dim].values,
                                                discontinuity_index, wavelength_dim)
     disc_applied = apply_discontinuity_offset(measured, disc_offset,
@@ -330,6 +369,15 @@ def ts_correction(measured: NDArray[float] | xr.DataArray,
         dT, psi_t = np.meshgrid(temperature - tcal, psi_temperature)
         s, psi_s = np.meshgrid(salinity, psi_salinity)
         mts = measured - ((psi_t.T * dT.T) + (psi_s.T * s.T))
+
+    if isinstance(mts, xr.DataArray):
+        # Assign attributes if output is an xr.DataArray.
+        mts.attrs['ancillary_variables'] = ', '.join([measured.name,
+                                                      temperature.name,
+                                                      salinity.name,
+                                                      psi_temperature.name,
+                                                      psi_salinity.name, 'tcal'])
+        mts.attrs['tcal'] = tcal
     return mts
 
 
@@ -358,12 +406,16 @@ def interpolate_common_wavelengths(ds: xr.Dataset,
     Only works on xarray Datasets.
     Applies interpolation to all variables on the a_wavelength and c_wavelength dimensions.
 
-    :param ds:
-    :param a_wavelength_dim:
-    :param c_wavelength_dim: 
-    :param wavelength_range:
-    :param step:
-    :return:
+    :param ds: The input dataset with two wavelength dimensions, one for absorption and the other for attenuation.
+    :param a_wavelength_dim: The name of the absorption wavelength dimension.
+    :param c_wavelength_dim: The name of the attenuation wavelength dimension.
+    :param wavelength_range: The wavelength range to interpolate along.
+        Default is 'infer', which will use the minimums and maximums of the absorption and attenuation wavelengths to
+        identify a common range for both channels.
+    :param step: The wavelength step size to interpolate to. Default is 1 nm.
+    :return: A dataset interpolated to the common wavelength range and step size. If there are variables that you do not
+        want to interpolate along (e.g. a_signal, a_reference, c_signal, c_reference), it is recommended that you subset
+        before interpolation.
     """
 
     if wavelength_range == 'infer':
@@ -378,46 +430,52 @@ def interpolate_common_wavelengths(ds: xr.Dataset,
         {a_wavelength_dim: new_wavelength_dim,
          c_wavelength_dim: new_wavelength_dim})
 
+    cds.attrs['wavelength_range'] = [min_wvl, max_wvl]
     cds.attrs['interpolation_step'] = step
     return cds
 
 
-def _determine_reference_wavelength_index(spectra):
-    num_wvls = len(spectra)
-    len_non_reds = len(spectra[:int(num_wvls*3/4)])
-    reds = spectra[int(num_wvls*3/4):]
-    reds_pos = np.where(reds < 0, np.nan, reds)
-    if np.all(np.isnan(reds_pos)):
-        return -999
-    reds_wvl_idx = int(np.nanargmin(reds_pos))
-    wvl_idx = len_non_reds + reds_wvl_idx
-    return wvl_idx
-
-
-def estimate_reference_wavelength(a_mts: xr.DataArray, wavelength_dim: str) -> float:
-    wvl_idxs = xr.apply_ufunc(_determine_reference_wavelength_index,
-                              a_mts,
-                              input_core_dims=[[wavelength_dim]],
-                              vectorize=True)
-    idxs, counts = np.unique(wvl_idxs, return_counts = True)
-    wvl_idx = idxs[np.nanargmax(counts)]
-    if wvl_idx == -999:
-        raise ValueError('No reference wavelength found. Please check the spectra.')
-    wvl = float(a_mts[wavelength_dim].values[wvl_idx])
-    return wvl
 
 
 def baseline_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
                                    reference_a: float | xr.DataArray) -> NDArray[float] | xr.DataArray:
+    """
+    Perform baseline scattering correction on the absorption coefficient.
+    This is the baseline method from Zaneveld et al. (1994).
+
+    :param a_mts: The TS-corrected absorption coefficient across all wavelengths.
+    :param reference_a: The TS-corrected absorption coefficient at a reference wavelength.
+    :return: The baseline scattering-corrected absorption coefficient.
+    """
+
     scatcorr = a_mts - reference_a
+
+    if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xr.DataArray.
+        scatcorr.attrs['ancillary_variables'] = a_mts.name
+
     return scatcorr
 
 
 def fixed_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
                                 c_mts: NDArray[float] | xr.DataArray, 
-                                F: float = 0.14) -> NDArray[float] | xr.DataArray:
+                                epsilon: float = 0.14) -> NDArray[float] | xr.DataArray:
+    """
+    Perform fixed scattering correction on the absorption coefficient.
+    This is the fixed correction method from Muller et al. (2002).
 
-    scatcorr = a_mts - F * (c_mts - a_mts)
+    :param a_mts: TS-corrected absorption.
+    :param c_mts: TS-corrected attenuation.
+    :param epsilon: A default value of 0.14 is used for biological particle dominant waters.
+        A value of 0.18 is recommended for waters dominated by sediments.
+    :return: Fixed scattering corrected absorption coefficient.
+    """
+
+    scatcorr = a_mts - epsilon * (c_mts - a_mts)
+
+    if isinstance(scatcorr, xr.DataArray):         # Assign attributes if output is an xr.DataArray.
+        scatcorr.attrs['ancillary_variables'] = ', '.join([a_mts.name, c_mts.name])
+        scatcorr.attrs['epsilon'] = epsilon
+
     return scatcorr
 
 
@@ -425,5 +483,122 @@ def proportional_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
                                        c_mts: NDArray[float] | xr.DataArray,
                                        reference_a: NDArray[float] | xr.DataArray,
                                        reference_c: NDArray[float] | xr.DataArray) -> NDArray[float] | xr.DataArray:
+    """
+    Perform proportional scattering correction on the absorption coefficient.
+    This is the proportional method from Zaneveld et al. (1994).
+
+    :param a_mts: TS-corrected absorption.
+    :param c_mts: TS-corrected attenuation.
+    :param reference_a: The TS-corrected absorption coefficient at a reference wavelength. Historically 715nm.
+    :param reference_c: The TS-corrected attenuation coefficient at a reference wavelength.  Historically 715nm.
+    :return: Proportional scattering corrected absorption coefficient.
+    """
+
     scatcorr = a_mts - ((reference_a / (reference_c - reference_a)) * (c_mts - a_mts))
+
+    if isinstance(scatcorr, xr.DataArray):    # Assign attributes if output is an xr.DataArray.
+        scatcorr.attrs['ancillary_variables'] = ', '.join([a_mts.name, c_mts.name])
+
     return scatcorr
+
+
+def baseline_plus_scattering_correction(a_mts: xr.DataArray,
+                                        reference_wavelength: float = 715.0) -> xr.DataArray:
+    # TODO - Implement functionality to allow use on a single ACS packet.
+    """
+    Perform baseline plus scattering correction for the absorption coefficient.
+    This method originates from Rottgers et al. (2013). https://doi.org/10.1016/j.mio.2013.11.001
+    True absorption at 715nm is empirically determined in Equation 5.
+
+    :param a_mts: The TS-corrected absorption coefficient.
+    :param reference_wavelength: The reference wavelength. Historically, 715nm is used.
+    :return: Baseline plus scattering corrected absorption coefficient.
+    """
+
+    ref_a = a_mts.sel(wavelength=reference_wavelength, method='nearest')
+    true_a_715 = 0.212 * np.pow(ref_a, 1.135)  # Equation 5 from Rottgers et al. (2013)
+
+
+    scatcorr = a_mts - (ref_a - true_a_715) # Equation 3 from Rottgers et al. (2013)
+
+    if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xr.DataArray.
+        scatcorr.attrs['ancillary_variables'] = ', '.join([a_mts.name])
+        scatcorr.attrs['reference_wavelength'] = reference_wavelength
+        scatcorr.attrs['scattering_correction_method'] = 'Baseline+ , Rottgers et al. (2013)'
+    return scatcorr
+
+
+def proportional_plus_scattering_correction(a_mts: xr.DataArray,
+                                            c_mts: xr.DataArray,
+                                            reference_wavelength: float = 715.0,
+                                            e_c: float = 0.56) -> xr.DataArray:
+    # TODO - Implement functionality to allow use on a single ACS packet.
+    # TODO - Implement functionality to not rely on interpolated wavelength bins.
+    """
+    Perform proportional plus scattering correction for the absorption coefficient.
+    This method originates from Rottgers et al. (2013). https://doi.org/10.1016/j.mio.2013.11.001
+    True absorption at 715nm is empirically determined in Equation 5.  The value e_c represents attenuation correction.
+
+    This function only works with xarray DataArrays that share a common 'wavelength' dimension, thus the dataset
+    must be linearly interpolated to a common wavelength range and bin size.
+
+    :param a_mts: The TS-corrected absorption coefficient.
+    :param c_mts: The TS-corrected attenuation coefficient.
+    :param reference_wavelength: The reference wavelength. Historically, 715nm is used.
+    :param e_c: The attenuation correction factor. Normally it is 1 (no attenuation correction),
+        but Rottgers et al. (2013) suggest a value of 0.56 when running wavelength independent correction (which this
+        function does).
+    :return: Proportional plus scattering corrected absorption coefficient.
+    """
+
+    ref_a = a_mts.sel(wavelength = reference_wavelength, method = 'nearest')
+    true_a_715 = 0.212 * np.pow(ref_a, 1.135) # Equation 5 from Rottgers et al. (2013)
+    ref_c = c_mts.sel(wavelength = reference_wavelength, method = 'nearest')
+
+    scatcorr = a_mts - (ref_a - true_a_715) * (((1/e_c) * c_mts - a_mts)/((1/e_c) * ref_c - true_a_715)) # Equation 4
+
+    if isinstance(scatcorr, xr.DataArray):    # Assign attributes if output is an xr.DataArray.
+        scatcorr.attrs['ancillary_variables'] = ', '.join([a_mts.name, c_mts.name, 'reference_wavelength'])
+        scatcorr.attrs['reference_wavelength'] = reference_wavelength
+        scatcorr.attrs['scattering_correction_method'] = 'Proportional+ , Rottgers et al. (2013)'
+    return scatcorr
+
+
+# IN DEVELOPMENT
+#
+#
+# def _determine_reference_wavelength_index(spectra):
+#     num_wvls = len(spectra)
+#     len_non_reds = len(spectra[:int(num_wvls*3/4)])
+#     reds = spectra[int(num_wvls*3/4):]
+#     reds_pos = np.where(reds < 0, np.nan, reds)
+#     if np.all(np.isnan(reds_pos)):
+#         return -999
+#     reds_wvl_idx = int(np.nanargmin(reds_pos))
+#     wvl_idx = len_non_reds + reds_wvl_idx
+#     return wvl_idx
+#
+#
+# def estimate_reference_wavelength(a_mts: xr.DataArray, wavelength_dim: str) -> float:
+#     wvl_idxs = xr.apply_ufunc(_determine_reference_wavelength_index,
+#                               a_mts,
+#                               input_core_dims=[[wavelength_dim]],
+#                               vectorize=True)
+#     idxs, counts = np.unique(wvl_idxs, return_counts = True)
+#     wvl_idx = idxs[np.nanargmax(counts)]
+#     if wvl_idx == -999:
+#         raise ValueError('No reference wavelength found. Please check the spectra.')
+#     wvl = float(a_mts[wavelength_dim].values[wvl_idx])
+#     return wvl
+#
+#
+#
+# def compute_total(uncorrected: NDArray[float] | xr.DataArray,
+#                   internal_temperature: float | xr.DataArray,
+#                   func_delta_t: Callable) -> NDArray[float] | xr.DataArray:
+#     if not isinstance(uncorrected, xr.DataArray):
+#         total = uncorrected - func_delta_t(internal_temperature)
+#     else:
+#         total = uncorrected - func_delta_t(internal_temperature).T
+#     return total
+#

@@ -33,7 +33,7 @@ TEST_SALINITY = 34.567 # Dummy salinity.
 
 
 def test():
-    dev = ACSDev('../dev_tools/test_files/ACS-00011_2022-10-20.DEV')
+    dev = ACSDev('../dev_tools/test_files/ACS-00011_2022-10-20.dev')
 
     acs_packet = ACSPacket(daq_time = TEST_TIME, full_packet=TEST_PACKET)
     assert syntax_test(acs_packet.full_packet) == FLAG.OK

@@ -9,7 +9,6 @@ import shutil
 import xarray as xr
 
 
-
 def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     """
     Reformat an OOI OPTAA dataset to make it more compatible with _acspype.
@@ -158,6 +157,8 @@ def build_acpype_dev_obj(response_data, start) -> object:
         cal_data[coeff_name] = matching_cals[matching_dt]
 
     class Dev:
+        # Simulate an ACSDev object.
+
         a_wavelength = cal_data['a_wavelength']
         c_wavelength = cal_data['c_wavelength']
         tbin = cal_data['tbins']

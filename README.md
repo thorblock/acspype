@@ -12,6 +12,14 @@ This package is available on the [Python Package Index (PyPI)](https://pypi.org/
 `pip install acspype`
 
 <br>
+
+
+The package is also available on [GitHub](https://github.com/IanTBlack/acspype) and can be cloned for development purposes:
+
+`git clone https://github.com/IanTBlack/acspype.git`
+
+
+<br>
 <br>
 
 ## **CAUTION**

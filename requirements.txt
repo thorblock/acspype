@@ -1,0 +1,15 @@
+bottleneck
+fsspec
+gsw
+jupyter
+ipykernel
+ipympl
+matplotlib
+pyserial
+netCDF4
+numpy
+pandas
+pytest
+scipy
+uv
+xarray
