@@ -1,6 +1,6 @@
 """This module contains core constants and functions used across acspype."""
 
-NUM_PAT = "[+-]?[0-9]*[.]?[0-9]+"  # REGEX for any number, float or int, positive or negative.
+NUM_PAT = r"[-+]?[0-9]*[.]?[0-9]+"  # REGEX for any number, float or int, positive or negative.
 
 # ---------- Packet Handling ---------- #
 PACKET_REGISTRATION = b'\xff\x00\xff\x00'  # Start of every ACS packet.
