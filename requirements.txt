@@ -1,15 +1,8 @@
 bottleneck
-fsspec
-gsw
-jupyter
-ipykernel
-ipympl
-matplotlib
-pyserial
 netCDF4
 numpy
 pandas
-pytest
+pyserial
+requests
 scipy
-uv
 xarray
