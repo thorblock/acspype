@@ -62,9 +62,6 @@ def estimate_poc(c_p_660: xr.DataArray, slope_offset: str | tuple | list) -> xr.
         elif slope_offset == 'behrenfeld2006':  # Behrenfeld and Boss 2006, Fall, Equatorial Pacific
             slope = 585
             offset = 7.6
-        elif slope_offset == 'goni2021':  # Goni et al, 2021, August, Oregon Shelf/Slope
-            slope = 39.32 * 12.01  # 39.32 is the mean of values from W1108C, Table 11, Goni et al. 2021
-            offset = 0
     elif isinstance(slope_offset, tuple | list):
         slope, offset = slope_offset
     poc = slope * c_p_660 + offset
