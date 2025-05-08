@@ -162,6 +162,7 @@ cython_debug/
 # Custom
 examples/ooi_data/
 examples/*.nc
+dev_tools/test_files/PROMETHEUS_AGG_SHIMADA_202405.nc
 scratch.ipynb
 EXAMPLE_SHIMADA_202405.nc
 *.png

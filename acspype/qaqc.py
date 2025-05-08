@@ -180,6 +180,30 @@ def gross_range_test(mts: xr.DataArray,
         return flags
 
 
+def discontinuity_offset_test(discontinuity_offset: xr.DataArray,
+                              median_multiplier: float = 3,
+                              fail_threshold: float = 10) -> xr.DataArray:
+    """
+    Flag a discontinuity offset value as pass or suspect. This is a custom test that uses a multiple of the median
+    of the offset to assess if the offset is acceptable.
+
+    Spectra with significantly large discontinuity offsets are likely to be of poor quality.
+
+    :param discontinuity_offset: The discontinuity offset value for absorption or attenuation.
+    :param median_multiplier: The multiplier of the median. Values within the multiplier range are deemed acceptable.
+    :param fail_threshold: The threshold for flagging the offset as fail.
+        Default is 10, or the maximum value of the ACS range.
+    :return: The flag of the discontinuity offset, which maintains the same size as the time dimension.
+    """
+    flags = xr.full_like(discontinuity_offset, 1).astype(int)
+    _median = discontinuity_offset.median(skipna = True)
+    flags = flags.where((np.abs(discontinuity_offset) < np.abs(_median) * median_multiplier), FLAG.SUSPECT)
+    flags = flags.where((np.abs(discontinuity_offset) < fail_threshold, FLAG.FAIL))
+    return flags
+
+
+
+
 # TODO: Test below functions.
 #
 # def blanket_gross_range_test(mts: xr.DataArray, wavelength_dim: str, percent_unacceptable: float = 10.0,
