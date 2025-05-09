@@ -19,7 +19,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 extensions = [
-   'sphinx.ext.autodoc',
+    'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
     'myst_parser',  # ← enables Markdown support 
@@ -29,10 +29,10 @@ extensions = [
 templates_path = ['_templates']
 exclude_patterns = []
 
-source_suffix = {
+source_suffix = [
     '.rst',  # Enable reStructuredText files
     '.md',   # Enable Markdown files
-}
+]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

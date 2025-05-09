@@ -15,7 +15,7 @@ documentation for details.
    :maxdepth: 2
    :caption: Contents:
 
-   api_reference
+   api_reference.rst
    NAMING_CONVENTIONS.md
    PROCESSING.md
    REFERENCE_MATERIAL.md
