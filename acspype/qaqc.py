@@ -202,35 +202,49 @@ def discontinuity_offset_test(discontinuity_offset: xr.DataArray,
     return flags
 
 
+def blanket_gross_range_test(nd_gross_range_results: xr.DataArray,
+                             wavelength_dim: str,
+                             suspect_threshold: float,
+                             fail_threshold: float,
+                             include_suspect_flags: bool = False) -> xr.DataArray:
+    """
+    Assess the validity of the gross range test results as a blanket flag for the spectra.
+    This is an experimental test.
+    The test considers the number of wavelength bins that were previously flagged as suspect or fail for exceeding the
+    gross range limits. If X percent of wavelength bins were flagged as fail (or fail/suspect) and exceed the
+    user-defined fail threshold, then the entire spectrum is flagged as fail. If the percentage is between the suspect and
+    fail thresholds then the spectra is flagged as suspect.
+    The threshold represents the percentage threshold between 0-1 (0-100%).
+
+    :param nd_gross_range_results: The N-dimensional results from the gross range test.
+    :param wavelength_dim: The wavelength dimension of the results.
+    :param suspect_threshold: The percentage threshold for suspect data.
+    :param fail_threshold: The percentage threshold for fail data.
+    :param include_suspect_flags: If True, include suspect flags along the spectra in the total fail.
+    :return: A blanket flag for the spectra, which maintains the same shape as the time dimension.
+    """
+    if fail_threshold < suspect_threshold:
+        raise ValueError('fail_threshold must be greater than suspect_threshold.')
+
+    num_wvls = len(nd_gross_range_results[wavelength_dim])
+
+    if include_suspect_flags is True:
+        _flags_bool = xr.where((nd_gross_range_results == 4) | (nd_gross_range_results == 3), 1, 0)
+    else:
+        _flags_bool = xr.where(nd_gross_range_results == 4, 1, 0)
+
+    _flags_bool_sum = np.sum(_flags_bool, axis=1)
+    ratio = _flags_bool_sum / num_wvls
+    flags = xr.full_like(nd_gross_range_results.time.astype(int), FLAG.NOT_EVALUATED).astype(int)
+
+    flags = flags.where((ratio < suspect_threshold) & (ratio > fail_threshold), FLAG.SUSPECT)
+    flags = flags.where(ratio < fail_threshold, FLAG.FAIL)
+
+    flags = flags.where(ratio >= suspect_threshold, FLAG.PASS)
+    return flags
 
 
-# TODO: Test below functions.
-#
-# def blanket_gross_range_test(mts: xr.DataArray, wavelength_dim: str, percent_unacceptable: float = 10.0,
-#                              sensor_min: float = -0.005, sensor_max: float = 10,
-#                              op_min:float = 0.001, op_max:float = 9.5):
-#     """
-#     Assign a blanket gross range flag based on the percentage of values that are flagged as suspect or fail in the spectrum.
-#
-#     :param mts: Measured and TS corrected absorption or attenuation data
-#     :param wavelength_dim: The wavelength dimension of the data.
-#     :param percent_unacceptable: The minimum percent of values that can be flagged as suspect or fail in the spectrum.
-#     :param sensor_min: The minimum sensor value to flag as fail
-#     :param sensor_max: The maximum sensor value to flag as fail.
-#     :param op_min: The minimum value to flag as suspect.
-#     :param op_max: The maximum value to flag as suspect.
-#     :return: The blanket flag of the data, which maintains the same size as the time dimension.
-#     """
-#
-#     ndflag = gross_range_test(mts,sensor_min, sensor_max, op_min, op_max)
-#     flag_bool = xr.where(ndflag == 1, 0, 1)
-#     num_wvls = len(mts[wavelength_dim])
-#     flag_bool_sum = np.sum(flag_bool,axis = 1)
-#     flag_percent = (flag_bool_sum / num_wvls) * 100
-#     flag = xr.full_like(mts.time.astype(int), FLAG.PASS).astype(int)
-#     flag = flag.where(flag_percent <= percent_unacceptable, FLAG.FAIL)
-#     return flag
-#
+
 #
 # def a_gt_c_test(absorption: xr.DataArray, attenuation: xr.DataArray) -> xr.DataArray:
 #     """
