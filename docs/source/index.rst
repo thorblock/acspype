@@ -15,7 +15,7 @@ documentation for details.
    :maxdepth: 4
    :caption: Contents:
 
-   api_reference.rst
+
    acspype.rst
    acspype.utils.rst
    modules.rst
