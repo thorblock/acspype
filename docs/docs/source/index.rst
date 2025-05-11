@@ -12,10 +12,13 @@ documentation for details.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: Contents:
 
    api_reference.rst
+   acspype.rst
+   acspype.utils.rst
+   modules.rst
    NAMING_CONVENTIONS.md
    PROCESSING.md
    REFERENCE_MATERIAL.md
