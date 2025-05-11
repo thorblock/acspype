@@ -19,11 +19,13 @@ ACSpype Documentation
    just at different scroll positions. Leaving modules.rst as is for now. Build does not include it in the final output.
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
    :caption: Contents:
 
 
    README.md
+   modules.rst
+   acspype.core
    acspype.utils.rst
    acspype.rst
    PROCESSING.md
