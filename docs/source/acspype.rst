@@ -1,13 +1,10 @@
 acspype main
 =====================
 
-Submodules
------------
-
 .. toctree::
    :maxdepth: 3
 
-   acspype.utils
+   
 
 acspype.core module
 -------------------

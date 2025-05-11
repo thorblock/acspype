@@ -2,13 +2,6 @@ acspype utils
 ========================
 
 
-Module contents
----------------
-
-.. automodule:: acspype.utils
-   :members:
-   :show-inheritance:
-   :undoc-members:
 
 acspype.utils.core module
 -------------------------
