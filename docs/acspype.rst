@@ -1,6 +1,6 @@
 acspype package
 ===============
-
+:no-index:
 Subpackages
 -----------
 
