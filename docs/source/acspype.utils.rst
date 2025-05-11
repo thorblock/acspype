@@ -1,8 +1,14 @@
-acspypeutilspackage
-=====================
+acspype utils
+========================
 
-Submodules
-----------
+
+Module contents
+---------------
+
+.. automodule:: acspype.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
 acspype.utils.core module
 -------------------------
@@ -16,14 +22,6 @@ acspype.utils.ooi module
 ------------------------
 
 .. automodule:: acspype.utils.ooi
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-Module contents
----------------
-
-.. automodule:: acspype.utils
    :members:
    :show-inheritance:
    :undoc-members:

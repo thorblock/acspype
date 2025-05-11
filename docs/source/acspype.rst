@@ -1,16 +1,13 @@
-acspypepackage
-===============
+acspype main
+=====================
 
-Subpackages
+Submodules
 -----------
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 3
 
    acspype.utils
-
-Submodules
-----------
 
 acspype.core module
 -------------------
@@ -88,14 +85,6 @@ acspype.tscor module
 --------------------
 
 .. automodule:: acspype.tscor
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-Module contents
----------------
-
-.. automodule:: acspype
    :members:
    :show-inheritance:
    :undoc-members:

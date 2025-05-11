@@ -3,23 +3,29 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-ACSpype documentation
+ACSpype Documentation
 =====================
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
 
+.. image:: images/IMG_4615.JPEG
+   :alt: The mastermind behind ACSpype
+   :align: center
+   :width: 400 px
+   :height: 600 px
+
+.. '_modules' is creating the list of modules, but there is not direct navigation to the modules page itself, 
+   so we may need to add a link to the modules page so that we don't have hidden functionality.
+   Do we keep the .md overall headers, on the site itself the overall headers and the subsequent subheaders lead to the same page,
+   just at different scroll positions.
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
    :caption: Contents:
 
 
+   README.md
    acspype.rst
    acspype.utils.rst
-   modules.rst
-   NAMING_CONVENTIONS.md
    PROCESSING.md
+   NAMING_CONVENTIONS.md
    REFERENCE_MATERIAL.md
-   README.md

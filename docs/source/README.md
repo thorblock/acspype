@@ -1,4 +1,4 @@
-# acspype
+# Introduction
 acspype provides functions for reading [Sea-Bird Scientific ACS](https://www.seabird.com/ac-s-spectral-absorption-and-attenuation-sensor/product?id=60762467715) data over serial and for performing processing on ACS data.
 Some of the target audiences for this package include technicians looking to integrate an ACS into an existing data acquisition system, researchers looking to process prior collected ACS data, and data scientists looking to redistribute ACS data in HDF formats.
 
@@ -49,7 +49,7 @@ Although *acspype* tries not enforce strict naming conventions for coordinates, 
 The names put forth in this document attempt to combine [CF Guidelines](https://cfconventions.org/Data/cf-standard-names/docs/guidelines.html) and conventions commonly used in literature that utilizes ACS data.
 
 
-## Issues, Discussions, and Contributions
+### Issues, Discussions, and Contributions
 If you experience an issue related to acspype, please use the [GitHub Issues](https://github.com/IanTBlack/acspype/issues) page to report it.
 
 If you would like to propose functionality or to discuss best practices, please start a discussion on the [GitHub Discussions](https://github.com/IanTBlack/acspype/discussions) page.
