@@ -13,6 +13,6 @@ sphinx:
 
 python:
   install:
-    - requirements: requirements.txt
+    - requirements: docs/rtd-require.txt
     - method: pip
       path: .
