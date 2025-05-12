@@ -7,7 +7,7 @@ ACSpype Documentation
 =====================
 
 
-.. image:: images/IMG_4615.JPEG
+.. image:: /_static/images/IMG_4615.JPEG
    :alt: The mastermind behind ACSpype
    :align: center
    :width: 400 px
@@ -24,8 +24,6 @@ ACSpype Documentation
 
 
    README.md
-   modules.rst
-   acspype.core
    acspype.utils.rst
    acspype.rst
    PROCESSING.md
