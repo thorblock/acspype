@@ -7,8 +7,8 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'ACSpype'
-copyright = '2025, Ian Black'
-author = 'Ian Black'
+copyright = '2025, Ian Black & Thor Black'
+author = 'Ian Black & Thor Black'
 release = '0.0.1'
 
 # -- General configuration ---------------------------------------------------
