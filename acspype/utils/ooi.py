@@ -16,7 +16,7 @@ import xarray as xr
 
 def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     """
-    Reformat an OOI OPTAA dataset to make it more compatible with _acspype.
+    Reformat an OOI OPTAA dataset to make it more compatible with acspype.
 
     :param ds: An OOI OPTAA dataset.
     :return: A reformatted and renamed OOI OPTAA dataset.
@@ -196,7 +196,7 @@ def get_ooi_optaa_cal(ds: xr.Dataset) -> object:
     params = {'uid': ds.attrs['AssetUniqueID']}
     response = requests.get(asset_url, params=params)
     if response.status_code == requests.codes.ok:
-        if 'aintenance' in response.text:
+        if 'aintenance' in response.text: # Check for maintenance message
             raise ConnectionError('OOI API is currently down for maintenance.')
         else:
             data = response.json()
@@ -212,7 +212,6 @@ def download_and_load_goldcopy(thredds_fileserver_url: str,
 
     :param thredds_fileserver_url: A THREDDS GoldCopy URL. Must be fileServer, not dodsC.
     :param save_dir: The directory to save the dataset to.
-    :param delete_on_load: If True, delete the file after loading it.
     :return: The xarray dataset.
     """
     os.makedirs(save_dir, exist_ok=True)

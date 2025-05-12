@@ -53,7 +53,7 @@ def convert_sn_hexdec(sn_int: int | xr.DataArray) -> str | xr.DataArray:
                                    output_core_dims=[[]],
                                    vectorize=True)
 
-        # Assign attributes if output is an xr.DataArray.
+        # Assign attributes if output is a xr.DataArray.
         sn_hexdec.attrs['ancillary_variables'] = sn_int.name
     return sn_hexdec
 
@@ -558,7 +558,7 @@ def proportional_plus_scattering_correction(a_mts: xr.DataArray,
     return scatcorr
 
 
-def _estimate_reference_wavelength_index(a_spectra: np.array) -> int:
+def _estimate_reference_wavelength_index(a_spectra: np.array) -> int | float:
     """
     Estimate the index of the reference wavelength of an absorption spectra. This function finds the first
     wavelength in the last 1/4 wavelength bins that is greater than and nearest to zero.
