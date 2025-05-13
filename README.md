@@ -1,8 +1,7 @@
 # acspype
-acspype provides functions for reading [Sea-Bird Scientific ACS](https://www.seabird.com/ac-s-spectral-absorption-and-attenuation-sensor/product?id=60762467715) data over serial and for performing processing on ACS data.
-Some of the target audiences for this package include technicians looking to integrate an ACS into an existing data acquisition system, researchers looking to process prior collected ACS data, and data scientists looking to redistribute ACS data in HDF formats.
+acspype provides functions for reading [Sea-Bird Scientific ACS](https://www.seabird.com/ac-s-spectral-absorption-and-attenuation-sensor/product?id=60762467715) data over serial and for performing advanced processing with ACS data.
 
-ACS data are inherently complex and difficult to work with, particularly for new users without strong optics backgrounds that desire to use the data for empirically derived data products like chlorophyll-a and particulate organic carbon.
+ACS data are inherently complex and difficult to work with, particularly for new users without strong optics backgrounds that desire to use the data for empirically derived data products like chlorophyll-a and particulate organic carbon. Some of the target audiences for this package include technicians looking to integrate an ACS into an existing data acquisition system, researchers looking to process prior collected ACS data, and data scientists looking to redistribute ACS data in HDF formats.
 This package attempts to simplify the process of ingesting and processing ACS data so that users can more quickly get to the science application in their research.
 
 
@@ -22,6 +21,7 @@ The package is also available on [GitHub](https://github.com/IanTBlack/acspype) 
 <br>
 <br>
 
+
 ## **CAUTION**
 ### Equipment
 If you are using this package to acquire data from an ACS over serial, it is your responsibility to ensure that you are 
@@ -39,7 +39,7 @@ If ancillary data is not immediately available, then processing up through measu
 
 
 ## Additional Information
-Additional information about the ACS, the manuals referenced in construction in this package, and the recommended processing and QAQC test can be found in the [info](https://github.com/IanTBlack/acspype/tree/main/info) directory of the GitHub repository.
+Additional information about the ACS, the manuals referenced in construction in this package, and the recommended processing and QAQC test can be found in the [info](https://github.com/IanTBlack/acspype/tree/main/info) directory of the GitHub repository or on [ReadTheDocs](https://acspype.readthedocs.io/en/latest/).
 
 ### Processing Steps and QAQC
 Recommended processing steps and QAQC tests are described in [PROCESSING.md](https://github.com/IanTBlack/acspype/blob/main/info/PROCESSING.md) document.
@@ -62,19 +62,20 @@ acspype will be updated on the PyPI as patches and major changes are implemented
 In addition to the physical sensor and a test cable, one who deploys an ACS will also receive a device file (ACS-XXX.dev) and a temperature-salinity correction file (TS4.cor) from Sea-Bird Scientific.
 
 The device file is a text file that contains pure water offsets, delta T values, and the wavelength bins for your specific ACS.
-No two device files are alike, making it critical to keep track of this information in order to compute advanced products.
+No two device files are alike, making it critical to keep track of this information in order to perform corrections and compute advanced products.
 
 The TS4.cor file is a text file that contains empirically derived temperature and salinity correction coefficients needed to correct absorption and attenuation data for changes in temperature and salinity.
-These coefficients have been derived and interpolated to 0.1 nm bins from the original data presented in [Sullivan et al. 2006](https://doi.org/10.1364/AO.45.005294).
+These coefficients have been derived and interpolated to 0.1 nm bins from the original data presented in [Sullivan et al. 2006](https://doi.org/10.1364/AO.45.005294). 
 The TS4.cor file received from Sea-Bird Scientific is not unique. This file has been converted and stored within acspype for convenience.
 
 ## What does this package **not** do?
-This package does not provide any functionality for logging data from the ACS. The file or database type is entirely left up to the user.
+This package does not provide any functionality for logging data from the ACS. The file or database type is entirely left up to you, the user.
 For file-based logging, we recommend using SQLite, which can be used to store data within multiple tables in a single file. 
 For application where concurrency is required, PostgreSQL is a good option. It provides functionality for handling arrays, which is how ACS data are best represented.
 The ACS produces a significant amount of data, so logging to text (.txt, .csv) or netCDF (.nc) files may best be done as hourly or daily files to prevent excessive memory usage.
 
 This package does not remove data at any processing stage. In some processing stages, data may be returned as NaN, which is an expected behaviour for poor quality data. For example, if the reference counts for absorption or attenuation are zero, the uncorrected absorption or attenuation at that wavelength bin will become Inf or NaN, because a division by zero occurs within the log calculation. Instances of NaN or Inf should be treated as suspect quality data and be further inspected by the user.
+Because this package heavily relies on Xarray, users should use [Xarray methods for subsetting and selecting data](https://docs.xarray.dev/en/latest/user-guide/indexing.html). 
 
 
 
