@@ -163,7 +163,5 @@ cython_debug/
 dev_tools/test_files/shimada_202405_subset.nc
 examples/ooi_data/
 examples/scratch
-*.png
-*.jpg
-*.tif
+
 
