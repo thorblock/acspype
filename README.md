@@ -1,8 +1,17 @@
 # acspype
+![ooi_optaa_nsif_cropped](/dev_tools/images/ooi_optaa_nsif.jpg)
+*Image from work supported by the U.S. National Science Foundation Ocean Observatories Initiative.*
+
+
 acspype provides functions for reading [Sea-Bird Scientific ACS](https://www.seabird.com/ac-s-spectral-absorption-and-attenuation-sensor/product?id=60762467715) data over serial and for performing advanced processing with ACS data.
 
 ACS data are inherently complex and difficult to work with, particularly for new users without strong optics backgrounds that desire to use the data for empirically derived data products like chlorophyll-a and particulate organic carbon. Some of the target audiences for this package include technicians looking to integrate an ACS into an existing data acquisition system, researchers looking to process prior collected ACS data, and data scientists looking to redistribute ACS data in HDF formats.
 This package attempts to simplify the process of ingesting and processing ACS data so that users can more quickly get to the science application in their research.
+
+## Quickstart
+A set of examples can be found in the GitHub Repository.
+Some examples require data downloaded from the OOI or [Kaggle](https://www.kaggle.com/datasets/blackia/shimada202405-subset-acs). Data from the OOI requires you to create an API account and to store those credentials in a .netrc file in your home/user directory.
+
 
 
 ## Installation

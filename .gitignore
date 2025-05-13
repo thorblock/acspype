@@ -10,7 +10,6 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-../../../Desktop/acspype/acspype/dist/
 downloads/
 eggs/
 .eggs/
@@ -25,6 +24,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+dist/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -121,12 +121,12 @@ celerybeat.pid
 
 # Environments
 .env
-../../../Desktop/acspype/.venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+.venv/
 
 # Spyder project settings
 .spyderproject
@@ -160,13 +160,10 @@ cython_debug/
 .idea/
 
 # Custom
+dev_tools/test_files/shimada_202405_subset.nc
 examples/ooi_data/
-examples/*.nc
-dev_tools/test_files/PROMETHEUS_AGG_SHIMADA_202405.nc
-scratch.ipynb
-EXAMPLE_SHIMADA_202405.nc
+examples/scratch
 *.png
 *.jpg
 *.tif
-dist/
 

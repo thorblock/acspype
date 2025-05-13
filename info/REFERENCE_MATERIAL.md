@@ -8,7 +8,7 @@ The most up-to-date manuals and protocols for the ACS can be found on the [Sea-B
 
 
 # Literature
-Not organized in any particular order.
+Below is a list of ACS, absorption, or attenuation related literature. It is not organized in any particular order.
 
 | Author | Year | Link | 
 |-------|------|------|
