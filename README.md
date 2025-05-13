@@ -1,5 +1,5 @@
 # acspype
-![ooi_optaa_nsif_cropped](/dev_tools/images/ooi_optaa_nsif.jpg)
+![ooi_optaa_nsif_cropped](https://github.com/IanTBlack/acspype/blob/main/dev_tools/figures/ooi_optaa_nsif.jpg)
 *Image from work supported by the U.S. National Science Foundation Ocean Observatories Initiative.*
 
 
