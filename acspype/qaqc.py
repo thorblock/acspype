@@ -259,10 +259,10 @@ def discontinuity_offset_test(discontinuity_offset: xr.DataArray,
         Default is 10, or the maximum value of the ACS range.
     :return: The flag of the discontinuity offset, which maintains the same size as the time dimension.
     """
-    flags = xr.full_like(discontinuity_offset, 1).astype(int)
+    flags = xr.full_like(discontinuity_offset, FLAG.PASS).astype(int)
     _median = discontinuity_offset.median(skipna=True)
     flags = flags.where((np.abs(discontinuity_offset) < np.abs(_median) * median_multiplier), FLAG.SUSPECT)
-    flags = flags.where((np.abs(discontinuity_offset) < fail_threshold, FLAG.FAIL))
+    flags = flags.where((np.abs(discontinuity_offset) < fail_threshold), FLAG.FAIL)
 
     # Assign attributes to the flags if an xarray.DataArray.
     flags.attrs['ancillary_variables'] = discontinuity_offset.name
