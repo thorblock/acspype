@@ -12,15 +12,30 @@ import xarray as xr
 
 
 class ACSPacket(NamedTuple):
+    """
+    A class for representing a time-stamped ACS packet.
+
+    :param daq_time: The host computer time the packet was acquired.
+    :param full_packet: The full packet, including the registration bytes and the checksum + pad bytes.
+    """
     daq_time: datetime
     full_packet: bytes | bytearray | None
 
     def to_dict(self) -> dict:
-        """Export the ACSPacket as a dictionary."""
+        """
+        Export the ACSPacket as a dictionary.
+
+        :return: A dict representation of the ACSPacket, where keys are attributes and values are attribute values.
+        """
         return self._asdict()
 
     def to_xarray(self) -> xr.Dataset:
-        """Export the ACSPacket as an xr.Dataset."""
+        """
+        Export the ACSPacket as an xarray.Dataset.
+
+        :return: An xarray.Dataset representation of the ACSPacket, where coordinates are the daq_time
+            and the data variable is the full_packet.
+        """
         ds = xr.Dataset()
         ds = ds.assign_coords({'daq_time': self.daq_time})
         ds['full_packet'] = bytes(self.full_packet)
@@ -28,6 +43,27 @@ class ACSPacket(NamedTuple):
 
 
 class ParsedPacket(NamedTuple):
+    """
+    A class for representing a parsed ACS packet.
+
+    :param daq_time: The host computer time the packet was acquired, usually passed from an ACSPacket.
+    :param record_length: The length of the packet in bytes.
+    :param packet_type: The type of packet.
+    :param sn_int: The serial number of the device represented as an integer.
+    :param a_reference_dark: The dark reference counts for the absorption channel.
+    :param a_signal_dark: The dark signal counts for the absorption channel.
+    :param raw_external_temperature: The raw external temperature reading in counts.
+    :param raw_internal_temperature: The raw internal temperature reading in counts.
+    :param c_reference_dark: The dark reference counts for the attenuation channel.
+    :param c_signal_dark: The dark signal counts for the attenuation channel.
+    :param elapsed_time: The elapsed time since power was supplied to the ACS, in milliseconds.
+    :param number_of_wavelengths: The number of wavelengths for each channel.
+    :param c_reference: The attenuation reference in counts.
+    :param a_reference: The absorption reference in counts.
+    :param c_signal: The attenuation signal in counts.
+    :param a_signal: The absorption signal in counts.
+    :param checksum: The checksum of the packet.
+    """
     daq_time: datetime
     record_length: int
     packet_type: int
@@ -50,11 +86,19 @@ class ParsedPacket(NamedTuple):
     checksum: int
 
     def to_dict(self) -> dict:
-        """Export the ParsedPacket as a dictionary."""
+        """
+        Export the ParsedPacket as a dictionary.
+
+        :return: A dict representation of the ParsedPacket, where keys are attributes and values are attribute values.
+        """
         return self._asdict()
 
     def to_xarray(self) -> xr.Dataset:
-        """Export the ParsedPacket as an xr.Dataset."""
+        """
+        Export the ParsedPacket as an xr.Dataset.
+
+        :return: An xarray.Dataset representation of the ParsedPacket.
+        """
         ds = xr.Dataset()
         ds = ds.assign_coords({'daq_time': [self.daq_time],
                                'wavelength_index': list(range(self.number_of_wavelengths))})
@@ -81,6 +125,27 @@ class ParsedPacket(NamedTuple):
 
 
 class DeviceCalibratedPacket(NamedTuple):
+    """
+    A class for representing a device file-calibrated ACS packet.
+
+    :param daq_time: The host computer time the packet was acquired, usually passed from an ParsedPacket.
+    :param a_wavelength: The wavelengths for the absorption channel.
+    :param c_wavelength: The wavelengths for the attenuation channel.
+    :param sn_hexdec: The serial number of the device represented as a hexadecimal string.
+    :param serial_number: The serial number of the device represented as a string.
+    :param internal_temperature: The internal temperature of the device in degrees Celsius.
+    :param external_temperature: The external temperature of the device in degrees Celsius.
+    :param a_uncorrected: The uncorrected absorption signal in inverse meters.
+    :param c_uncorrected: The uncorrected attenuation signal in inverse meters.
+    :param discontinuity_index: The index of the discontinuity in both channels.
+    :param a_discontinuity_offset: The offset for the absorption channel discontinuity.
+    :param c_discontinuity_offset: The offset for the attenuation channel discontinuity.
+    :param a_m_discontinuity: The absorption coefficient without discontinuity correction applied.
+    :param c_m_discontinuity: The attenuation coefficient without discontinuity correction applied.
+    :param a_m: The measured absorption coefficient in inverse meters.
+    :param c_m: The measured attenuation coefficient in inverse meters.
+    """
+
     daq_time: datetime
     a_wavelength: tuple[float, ...]
     c_wavelength: tuple[float, ...]
@@ -99,9 +164,19 @@ class DeviceCalibratedPacket(NamedTuple):
     c_m: ArrayLike
 
     def to_dict(self) -> dict:
+        """
+        Export the DeviceCalibratedPacket as a dictionary.
+
+        :return: A dict representation of the DeviceCalibratedPacket, where keys are attrs and values are attr values.
+        """
         return self._asdict()
 
     def to_xarray(self) -> xr.Dataset:
+        """
+        Export the DeviceCalibratedPacket as an xarray.Dataset.
+
+        :return: An xarray.Dataset representation of the DeviceCalibratedPacket.
+        """
         ds = xr.Dataset()
         ds = ds.assign_coords({'daq_time': [self.daq_time],
                                'a_wavelength': np.array(self.a_wavelength),
@@ -123,6 +198,17 @@ class DeviceCalibratedPacket(NamedTuple):
 
 
 class TSCorrectedPacket(NamedTuple):
+    """
+    A class for representing a temperature and salinity-corrected ACS packet.
+
+    :param daq_time: The host computer time the packet was acquired, usually passed from a DeviceCalibratedPacket.
+    :param a_wavelength: The wavelengths for the absorption channel.
+    :param c_wavelength: The wavelengths for the attenuation channel.
+    :param temperature: The temperature of the water in degrees Celsius.
+    :param salinity: The salinity of the water in practical salinity units (PSU).
+    :param a_mts: The temperature and salinity-corrected absorption coefficient in inverse meters.
+    :param c_mts: The temperature and salinity-corrected attenuation coefficient in inverse meters.
+    """
     daq_time: datetime
     a_wavelength: tuple[float, ...]
     c_wavelength: tuple[float, ...]
@@ -132,9 +218,19 @@ class TSCorrectedPacket(NamedTuple):
     c_mts: ArrayLike
 
     def to_dict(self) -> dict:
+        """
+        Export the TSCorrectedPacket as a dictionary.
+
+        :return: A dict representation of the TSCorrectedPacket, where keys are attributes and values are attr values.
+        """
         return self._asdict()
 
     def to_xarray(self) -> xr.Dataset:
+        """
+        Export the TSCorrectedPacket as an xarray.Dataset.
+
+        :return: An xarray.Dataset representation of the TSCorrectedPacket.
+        """
         ds = xr.Dataset()
         ds = ds.assign_coords({'daq_time': self.daq_time,
                                'a_wavelength': np.array(self.a_wavelength),

@@ -110,7 +110,7 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     # Drop confusing variables or variables we will reprocess to.
     vars_to_drop = ['driver_timestamp', 'uuid', 'provenance_uuid', 'internal_timestamp', 'ingestion_timestamp',
                     'profiler_timestamp', 'port_timestamp', 'preferred_timestamp', 'suspect_timestamp', 'raw_pressure',
-                    'optical_absorption','beam_attenuation']
+                    'optical_absorption', 'beam_attenuation']
     nds = nds.drop_vars(vars_to_drop, errors='ignore')
 
     # Reorder variables alphabetically for convenience.
@@ -119,7 +119,7 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     return nds
 
 
-def build_acpype_dev_obj(response_data, start) -> object:
+def _build_acpype_dev_obj(response_data, start) -> object:
     """
     Build an ACSDev-like object for processing OOI OPTAA data with _acspype.
 
@@ -196,11 +196,11 @@ def get_ooi_optaa_cal(ds: xr.Dataset) -> object:
     params = {'uid': ds.attrs['AssetUniqueID']}
     response = requests.get(asset_url, params=params)
     if response.status_code == requests.codes.ok:
-        if 'aintenance' in response.text: # Check for maintenance message
+        if 'aintenance' in response.text:  # Check for maintenance message
             raise ConnectionError('OOI API is currently down for maintenance.')
         else:
             data = response.json()
-            dev = build_acpype_dev_obj(data, start)
+            dev = _build_acpype_dev_obj(data, start)
             return dev
 
 

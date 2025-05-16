@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 import numpy as np
 from numpy.typing import NDArray
 from struct import calcsize
@@ -10,27 +10,62 @@ from acspype.packet import unpack_packet
 
 
 class FLAG:
+    """
+    Flag values for the ACS QA/QC tests. These flags follow the QARTOD flag meanings.
+
+    :param OK: Indicates that the data passed the test.
+    :param PASS: Indicates that the data passed the test.
+    :param NOT_EVALUATED: Indicates that the data was not evaluated. Appearance of this flag indicates a problem with
+        the test function and not the data.
+    :param SUSPECT: Indicates that the data is suspect.
+        This flag indicates that the data should be reviewed more closely.
+    :param HIGH_INTEREST: Indicates that the data is of high interest. Although it uses the same flag as SUSPECT, the
+        context of the test and environmental conditions should be considered when reviewing the data.
+    :param FAIL: Indicates that the data failed the test.
+    :param BAD: Indicates that the data is bad and failed the test.
+    :param MISSING_DATA: Indicates that the input data or ancillary data is missing (NaN) and the test was not run.
+    """
+
     OK: int = 1
     PASS: int = 1
     NOT_EVALUATED: int = 2
     SUSPECT: int = 3
     HIGH_INTEREST: int = 3
     FAIL: int = 4
+    BAD: int = 4
     MISSING_DATA: int = 9
 
 
-def gap_test(now, time_stmp, buffer_length, record_length, time_inc=0.25):
+def gap_test(now: datetime,
+             time_stmp: datetime,
+             record_length: int,
+             buffer_length: int | None,
+             time_inc: float = 0.25) -> int:
+    """
+    Assess the gap between the current time and the timestamp of the packet. This is a modified form of the generic
+    QARTOD gap test.
+
+    :param now: The time at which the test is being run.
+    :param time_stmp: The timestamp of the packet.
+    :param buffer_length: The number of bytes in the serial buffer. If None, the corresponding section of the test is
+        skipped.
+    :param record_length: The record length of the packet. This is the expected number of bytes in the packet.
+    :param time_inc: The time increment to use for assessing timestamp gaps. Default is 0.25 seconds, which is the
+        approximate time that it takes the ACS to send a complete packet.
+    :return: A flag indicating pass or fail.
+    """
     if now - time_stmp > timedelta(seconds=time_inc):  # Defined in QARTOD Ocean Optics Manual.
         return FLAG.FAIL
-    elif buffer_length > record_length:
-        """
-        This is a custom take on the gap test. 
-        If for some reason the buffer length exceeds the previous frame length, that would indicate that
-        the buffer is filling up faster than the packets can be unpacked. This would ultimately result in the timestamp
-        of the value being off by one or multiples of 250ms periods, depending on the buffer length. This would also 
-        indicate an issue with the timing of the data acquisition thread.
-        """
-        return FLAG.FAIL
+    elif buffer_length is not None:
+        if buffer_length > record_length:
+            """
+            This is a custom take on the gap test. 
+            If for some reason the buffer length exceeds the previous frame length, that would indicate that
+            the buffer is filling up faster than the packets can be unpacked. This would ultimately result in the 
+            timestamp of the value being off by one or multiples of 250ms periods, depending on the buffer length. 
+            This could also indicate an issue with the timing of the data acquisition thread.
+            """
+            return FLAG.FAIL
     else:
         return FLAG.PASS
 
@@ -43,6 +78,7 @@ def syntax_test(full_packet: bytearray) -> int:
     :param full_packet: A full packet from the ACS, including registration bytes and the pad byte.
     :return: Flag indicating pass or fail.
     """
+
     raw, checksum = unpack_packet(full_packet)
     remaining_packet_size = int(raw[LPR + 13] * 2 * 2)
     full_packet_descriptor = PACKET_HEAD + f"{remaining_packet_size}H" + PACKET_TAIL
@@ -83,6 +119,7 @@ def elapsed_time_test(elapsed_time: int | xr.DataArray, fail_threshold: int = 10
         suspect threshold where data is considered to be suspect.
     :return: Flag indicating pass, suspect, or fail.
     """
+
     if not isinstance(elapsed_time, xr.DataArray):
         if elapsed_time <= fail_threshold:
             return FLAG.FAIL
@@ -95,6 +132,13 @@ def elapsed_time_test(elapsed_time: int | xr.DataArray, fail_threshold: int = 10
         flags = xr.where(elapsed_time <= fail_threshold, FLAG.FAIL, flags)
         flags = xr.where((elapsed_time > fail_threshold) & (elapsed_time <= suspect_threshold), FLAG.SUSPECT, flags)
         flags = xr.where(elapsed_time > suspect_threshold, FLAG.PASS, flags)
+
+        # Assign attributes to the flags if an xarray.DataArray.
+        flags.attrs['ancillary_variables'] = elapsed_time.name
+        flags.attrs['fail_threshold'] = fail_threshold
+        flags.attrs['suspect_threshold'] = suspect_threshold
+        flags.attrs['threshold_units'] = 'milliseconds'
+        flags.attrs['test_name'] = 'elapsed_time_test'
         return flags
 
 
@@ -123,6 +167,13 @@ def internal_temperature_test(internal_temperature: float | xr.DataArray,
         flags = xr.full_like(internal_temperature, FLAG.NOT_EVALUATED).astype(int)
         flags = xr.where((min_t > internal_temperature) & (max_t < internal_temperature), FLAG.SUSPECT, flags)
         flags = xr.where((min_t <= internal_temperature) & (max_t >= internal_temperature), FLAG.PASS, flags)
+
+        # Assign attributes to the flags if an xarray.DataArray.
+        flags.attrs['ancillary_variables'] = internal_temperature.name
+        flags.attrs['minimum_temperature_bin'] = min_t
+        flags.attrs['maximum_temperature_bin'] = max_t
+        flags.attrs['temperature_bin_units'] = 'degrees Celsius'
+        flags.attrs['test_name'] = 'internal_temperature_test'
         return flags
 
 
@@ -145,6 +196,10 @@ def inf_nan_test(uncorrected: NDArray[float] | xr.DataArray) -> int | xr.DataArr
         flags = xr.full_like(uncorrected.time.astype(int), FLAG.PASS).astype(int)
         flags = xr.where((np.any(np.isinf(uncorrected), axis=1)), FLAG.FAIL, flags)
         flags = xr.where((np.any(np.isnan(uncorrected), axis=1)), FLAG.FAIL, flags)
+
+        # Assign attributes to the flags if an xarray.DataArray.
+        flags.attrs['ancillary_variables'] = uncorrected.name
+        flags.attrs['test_name'] = 'inf_nan_test'
         return flags
 
 
@@ -177,6 +232,15 @@ def gross_range_test(mts: xr.DataArray,
         flags = flags.where((mts > op_min) | (mts < sensor_min), FLAG.SUSPECT)
         flags = flags.where((mts < op_max) | (mts > sensor_max), FLAG.SUSPECT)
         flags = flags.where((mts <= op_min) | (mts >= op_max), FLAG.PASS)
+
+        # Assign attributes to the flags if an xarray.DataArray.
+        flags.attrs['ancillary_variables'] = mts.name
+        flags.attrs['sensor_min'] = sensor_min
+        flags.attrs['sensor_max'] = sensor_max
+        flags.attrs['operator_min'] = op_min
+        flags.attrs['operator_max'] = op_max
+        flags.attrs['threshold_units'] = 'm^-1'
+        flags.attrs['test_name'] = 'gross_range_test'
         return flags
 
 
@@ -196,9 +260,17 @@ def discontinuity_offset_test(discontinuity_offset: xr.DataArray,
     :return: The flag of the discontinuity offset, which maintains the same size as the time dimension.
     """
     flags = xr.full_like(discontinuity_offset, 1).astype(int)
-    _median = discontinuity_offset.median(skipna = True)
+    _median = discontinuity_offset.median(skipna=True)
     flags = flags.where((np.abs(discontinuity_offset) < np.abs(_median) * median_multiplier), FLAG.SUSPECT)
     flags = flags.where((np.abs(discontinuity_offset) < fail_threshold, FLAG.FAIL))
+
+    # Assign attributes to the flags if an xarray.DataArray.
+    flags.attrs['ancillary_variables'] = discontinuity_offset.name
+    flags.attrs['median_multiplier'] = median_multiplier
+    flags.attrs['fail_threshold'] = fail_threshold
+    flags.attrs['suspect_threshold'] = np.abs(_median) * median_multiplier
+    flags.attrs['threshold_units'] = 'm^-1'
+    flags.attrs['test_name'] = 'discontinuity_offset_test'
     return flags
 
 
@@ -212,8 +284,8 @@ def blanket_gross_range_test(nd_gross_range_results: xr.DataArray,
     This is an experimental test.
     The test considers the number of wavelength bins that were previously flagged as suspect or fail for exceeding the
     gross range limits. If X percent of wavelength bins were flagged as fail (or fail/suspect) and exceed the
-    user-defined fail threshold, then the entire spectrum is flagged as fail. If the percentage is between the suspect and
-    fail thresholds then the spectra is flagged as suspect.
+    user-defined fail threshold, then the entire spectrum is flagged as fail. If the percentage is between the suspect
+    and fail thresholds then the spectra is flagged as suspect.
     The threshold represents the percentage threshold between 0-1 (0-100%).
 
     :param nd_gross_range_results: The N-dimensional results from the gross range test.
@@ -241,21 +313,78 @@ def blanket_gross_range_test(nd_gross_range_results: xr.DataArray,
     flags = flags.where(ratio < fail_threshold, FLAG.FAIL)
 
     flags = flags.where(ratio >= suspect_threshold, FLAG.PASS)
+
+    # Assign attributes to the flags if an xarray.DataArray.
+    flags.attrs['ancillary_variables'] = nd_gross_range_results.name
+    flags.attrs['suspect_threshold'] = suspect_threshold
+    flags.attrs['fail_threshold'] = fail_threshold
+    flags.attrs['threshold_units'] = 'm^-1'
+    flags.attrs['includes_suspect_flags'] = include_suspect_flags
+    flags.attrs['test_name'] = 'blanket_gross_range_test'
     return flags
 
 
+def a_gt_c_test(absorption: xr.DataArray, attenuation: xr.DataArray) -> xr.DataArray:
+    """
+    Assess if the absorption is greater than the attenuation. Having absorption greater than attenuation is (mostly)
+    lawfully impossible. It is recommended that this test be run on scattering corrected absorption with ts-corrected
+    attenuation. This test is not included in the QARTOD manual, but is a custom test based on reality checks in the
+    ACS protocol document.
 
-#
-# def a_gt_c_test(absorption: xr.DataArray, attenuation: xr.DataArray) -> xr.DataArray:
-#     """
-#     Assess if the absorption is greater than the attenuation. Having absorption greater than attenuation is
-#     (mostly) physically impossible.
-#     :param absorption: Absorption data.
-#     :param attenuation: Attenuation data.
-#     :return: Flag indicating if absorption is greater than attenuation.
-#     """
-#
-#     flag = xr.full_like(absorption, FLAG.NOT_EVALUATED).astype(int)
-#     flag = flag.where(absorption > attenuation, FLAG.FAIL)
-#     flag = flag.where(absorption <= attenuation, FLAG.PASS)
-#     return flag
+    :param absorption: Absorption data.
+    :param attenuation: Attenuation data.
+    :return: Flag indicating if absorption is greater than attenuation.
+    """
+
+    flags = xr.full_like(absorption, FLAG.NOT_EVALUATED).astype(int)
+    flags = flags.where(absorption <= attenuation, FLAG.SUSPECT)
+    flags = flags.where(absorption > attenuation, FLAG.PASS)
+
+    # Assign attributes to the flags if an xarray.DataArray.
+    flags.attrs['ancillary_variables'] = [absorption.name, attenuation.name]
+    flags.attrs['test_name'] = 'a_gt_c_test'
+    return flags
+
+
+def rolling_variance_test(mts: xr.DataArray,
+                          use_mean: str = 'rolling',
+                          window_size: int = 4 * 60,
+                          exceedance_percentage: float = 0.25,
+                          min_periods: int | None = 1) -> xr.DataArray:
+    """
+    Apply a rolling variance test to a measured absorption or attenuationcoefficient.
+
+    :param mts: The measured absorption or attenuation coefficient. For absorption the recommendation is to use
+        a scattering corrected measurement. For attenuation the recommendation is to us a TS-corrected measurement.
+    :param use_mean: Indicates whether to use the timeseries mean or a rolling window mean along the time dimension.
+    :param window_size: The centered window size for the variance window
+        and for the mean window if use_mean = 'rolling'.
+    :param exceedance_percentage: The percentage of the mean that the variance must exceed to be flagged as suspect.
+    :param min_periods: The minimum number of periods to perform this test.
+        Same functionality as the min_periods argument for xarray.DataArray.rolling.
+    :return: A flag indicating SUSPECT or PASS.
+    """
+    use_mean = use_mean.lower()
+    if use_mean == 'timeseries':
+        m_mean = mts.mean(dim='time', skipna=True)
+        mean_type = 'timeseries_mean'
+    elif use_mean == 'rolling':
+        m_mean = mts.rolling(time=window_size, center=True, min_periods=min_periods).mean(skipna=True)
+        mean_type = 'rolling_mean'
+    else:
+        raise ValueError("use_mean must be 'timeseries' or 'rolling'.")
+
+    m_var = mts.rolling(time=window_size, center=True, min_periods=min_periods).var(skipna=True)
+
+    flags = xr.full_like(mts, FLAG.NOT_EVALUATED).astype(int)
+    flags = flags.where(m_var < exceedance_percentage * m_mean, FLAG.SUSPECT)
+    flags = flags.where(m_var >= exceedance_percentage * m_mean, FLAG.PASS)
+
+    # Assign attributes to the flags if an xarray.DataArray.
+    flags.attrs['ancillary_variables'] = mts.name
+    flags.attrs['rolling_variance_test_window_size'] = window_size
+    flags.attrs['exceedance_percentage'] = exceedance_percentage
+    flags.attrs['mean_type'] = mean_type
+    flags.attrs['min_periods'] = min_periods
+    flags.attrs['test_name'] = 'rolling_variance_test'
+    return flags

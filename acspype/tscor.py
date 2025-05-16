@@ -6,6 +6,8 @@ from acspype.ts4cor import TS4COR
 
 
 class ACSTSCor:
+    """A wrapper class for the TS4COR dictionary that is included with the package."""
+
     def __init__(self):
         self.wavelengths = tuple(TS4COR.keys())
         self.psi_s_a = list(map(lambda x: x[1]['psi_s_a'], TS4COR.items()))
@@ -14,6 +16,11 @@ class ACSTSCor:
         self.method = 'Sullivan et al., 2006'
 
     def to_xarray(self):
+        """
+        Convert the TS4COR dictionary to an xarray dataset.
+
+        :return: A dimensioned xarray.Dataset.
+        """
         ds = xr.Dataset()
         ds = ds.assign_coords({'wavelength': np.array(self.wavelengths)})
         ds['psi_t'] = (['wavelength'], np.array(self.psi_t))
@@ -85,6 +92,11 @@ class ACSTS4CorReader:
             self.psi_s_a = np.array(psi_s_a)
 
     def to_xarray(self):
+        """
+        Convert the imported TS4 data to an xarray dataset.
+
+        :return: A dimensioned xarray.Dataset.
+        """
         ds = xr.Dataset()
         ds = ds.assign_coords({'wavelength': np.array(self.wavelengths)})
         ds['psi_t'] = (['wavelength'], np.array(self.psi_t))

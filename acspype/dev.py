@@ -66,6 +66,8 @@ class ACSDev:
                     self.cal_date = datetime.strptime(cal_date_str, '%m/%d/%Y').strftime('%Y-%m-%d')
                 except:
                     self.cal_date = datetime.strptime(cal_date_str, '%m/%d/%y').strftime('%Y-%m-%d')
+                finally:
+                    raise ValueError('Unable to parse calibration date. Please verify the .dev file integrity.')
             elif 'Depth calibration' in line:
                 (self.depth_cal_1,
                  self.depth_cal_2) = [float(v) for v in re.findall(f'({NUM_PAT})', line)]
@@ -186,7 +188,7 @@ class ACSDev:
         """
         Convert the parsed .dev file files to an xarray dataset
 
-        Returns: An appropriately dimensioned xarray dataset containing device file files.
+        :return: An appropriately dimensioned xarray dataset containing device file files.
         """
         ds = xr.Dataset()
         ds = ds.assign_coords({'a_wavelength': self.a_wavelength,

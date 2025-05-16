@@ -7,13 +7,13 @@ from acspype.packet import parse_packet, calibrate_packet, ts_correct_packet
 from acspype.dev import ACSDev
 
 
-class ACSStream():
+class ACSStream:
     BAUDRATE: int = 115200
     BYTESIZE: int = 8
     PARITY: str = 'N'
     STOPBITS: int = 1
     FLOWCONTROL: int = 0
-    TIMEOUT: int = 1
+    TIMEOUT: float = 1
 
     def __init__(self, port: str,
                  baudrate: int = BAUDRATE,
