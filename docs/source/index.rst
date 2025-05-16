@@ -7,11 +7,13 @@ ACSpype Documentation
 =====================
 
 
-.. image:: /_static/images/IMG_4615.JPEG
-   :alt: The mastermind behind ACSpype
+.. image:: /_static/images/ooi_optaa_nsif.jpg
+   :alt: A beautiful image of an ACS sensor
    :align: center
-   :width: 400 px
-   :height: 600 px
+
+
+
+*Image from work supported by the U.S. National Science Foundation Ocean Observatories Initiative.*
 
 .. '_modules' is creating the list of modules, but there is not direct navigation to the modules page itself, 
    so we may need to add a link to the modules page so that we don't have hidden functionality.
@@ -24,8 +26,9 @@ ACSpype Documentation
 
 
    README.md
+   acspype-reorder.rst
    acspype.utils.rst
-   acspype.rst
    PROCESSING.md
+   EXAMPLES.rst
    NAMING_CONVENTIONS.md
    REFERENCE_MATERIAL.md

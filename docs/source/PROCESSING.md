@@ -1,5 +1,5 @@
 # Processing Guide
-# Recommended Serial Acquisition Steps
+Recommended Serial Acquisition Steps
 The ACS communicates over RS232 at 115200-8-N-1.
 
 | **Step** | **Step Description**      | **Notes**                                                                                                                                                                                              |
@@ -15,7 +15,8 @@ The ACS communicates over RS232 at 115200-8-N-1.
 | 0.8      | Run Additional QAQC Tests | OPTIONAL: Run elapsed time test, internal temperature test, and Inf Nan Test on uncorrected data. These test can probably be done during data acquisition on a single thread.                          |
 
 
-# Recommended Processing Steps
+Recommended Processing Steps
+
 Note: Many of the steps in the table below are described further in the Sea-Bird Scientific [ACS Protocol Document (Rev Q)](https://www.seabird.com/asset-get.download.jsa?id=69833852764).
 [GSW](https://pypi.org/project/gsw/) is the Pythonic implementation of the Gibbs-SeaWater for TEOS-10.
 
@@ -42,7 +43,8 @@ Note: Many of the steps in the table below are described further in the Sea-Bird
 | 7.0      | Compute Advanced Data Products                                                                   | Yes (Ongoing Development)   | Corrected absorption and attenuation products are used to compute advanced data products (e.g. chlorophyll-a from absorption line height and particulate organic carbon).                                                                                                 | 
 
 
-# Recommended QAQC Tests
+Recommended QAQC Tests
+
 Note: If using *acspype* and a flag of 2 (NOT_EVALUATED) is assigned in these tests, that indicates there was a programmatic failure in the test and an issue should be raised on GitHub.
 
 | **Test Name**             | **Test Description**                                                                                                                                                                                                                                                                                                                                                          | **Recommended Settings**                                                        | **Is QARTOD?** | **Possible Results** | **Notes**                                                                                                                                                                                                                                                                                                                                                  |
