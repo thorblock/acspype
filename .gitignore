@@ -161,7 +161,8 @@ cython_debug/
 
 # Custom
 dev_tools/test_files/shimada_202405_subset.nc
+dev_tools/figures/
 examples/ooi_data/
-examples/scratch
+examples/scratch/
 
 
