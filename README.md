@@ -9,7 +9,7 @@ ACS data are inherently complex and difficult to work with, particularly for new
 This package attempts to simplify the process of ingesting and processing ACS data so that users can more quickly get to the science application in their research.
 
 ## Quickstart
-A set of examples can be found in the GitHub Repository.
+A set of examples can be found in the [*acspype* GitHub Repository](https://github.com/IanTBlack/acspype/tree/main/examples).
 Some examples require data downloaded from the OOI or [Kaggle](https://www.kaggle.com/datasets/blackia/shimada202405-subset-acs). Data from the OOI requires you to create an API account and to store those credentials in a .netrc file in your home/user directory.
 
 
