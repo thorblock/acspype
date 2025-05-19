@@ -17,8 +17,8 @@ Welcome to acspype's documentation!
 
 .. toctree::
    :maxdepth: 5
-   :caption: Contents:
 
+   :caption: Contents:
    readme_link.rst
    acspype.rst
    acspype.utils.rst

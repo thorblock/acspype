@@ -16,4 +16,4 @@ xarray
 sphinx
 sphinx_rtd_theme
 myst-nb
-m2r
+m2r2
