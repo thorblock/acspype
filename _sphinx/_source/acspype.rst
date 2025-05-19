@@ -61,14 +61,6 @@ acspype.tscor module
    :show-inheritance:
    :undoc-members:
 
-acspype.core module
--------------------------
-
-.. automodule:: acspype.core
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 
 acspype.utils.core module
 -------------------------

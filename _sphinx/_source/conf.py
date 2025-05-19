@@ -5,15 +5,35 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-import os 
+from datetime import datetime
+import tomllib
+import os
 import sys # Path manipulation
 
+# Read information from pyproject.toml
+with open("../../pyproject.toml", "rb") as _f:
+    _config = tomllib.load(_f)
 
-project = 'acspype'
-copyright = '2025, Ian Black, 2025, Thor Black'
-license = 'MIT'
-author = 'Ian Black, Thor Black'
-release = '0.3.0'
+__project = _config['project']
+__year = datetime.now().year
+
+proj_name = __project['name']
+proj_release = __project['version']
+proj_license = __project['license']
+proj_authors = ', '.join([d['name'] for d in __project['authors']])
+proj_copyright = f"{__year}, {proj_authors}"
+project = proj_name
+copyright = proj_copyright
+license = proj_license
+author = proj_authors
+release = proj_release
+
+#
+# project = 'acspype'
+# copyright = '2025, Ian Black, 2025, Thor Black'
+# license = 'MIT'
+# author = 'Ian Black, Thor Black'
+# release = '0.3.0'
 
 sys.path.insert(0, os.path.abspath('../..')) # Adjust the path to point to the root of your project
 
