@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 
 from src.acspype import ACSDev
-from src.acspype.packet import parse_packet, calibrate_packet, ts_correct_packet
+from acspype.packet import parse_packet, calibrate_packet, ts_correct_packet
 from src.acspype import ACSPacket
-from src.acspype.qaqc import FLAG, syntax_test
+from acspype.qaqc import FLAG, syntax_test
 
 TEST_TIME = datetime.now(timezone.utc)
 

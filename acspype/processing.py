@@ -123,7 +123,7 @@ def compute_internal_temperature(counts: int | xr.DataArray) -> float | xr.DataA
 def compute_external_temperature(counts: int | xr.DataArray) -> float | xr.DataArray:
     """
     Compute the external temperature of the ACS from the counts of the external temperature sensor.
-    Not used in processing if the sensor is not placed in-situ or if there is a better source that is indicative
+    Not used in processing if the sensor is not placed in-situ or if there is a better _source that is indicative
     of the temperature of the water sampled by the ACS.
 
     :param counts: The counts of the external temperature sensor.

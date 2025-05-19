@@ -58,7 +58,7 @@ def estimate_poc(c_p_660: xr.DataArray, slope_offset: str | tuple | list) -> xr.
     author and the year of the publication.
 
     :param c_p_660: c_p at 660 nm.
-    :param slope_offset: A string indicating the literary source for the slope and offset or
+    :param slope_offset: A string indicating the literary _source for the slope and offset or
         a tuple or list containing the slope and offset values.
     :return: Estimated particulate organic carbon in mg/m3.
     """

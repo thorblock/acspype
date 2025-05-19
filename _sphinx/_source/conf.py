@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath('../..')) # Adjust the path to point to the r
 extensions = [
     'sphinx.ext.autodoc', # Automatically generate documentation from docstrings
     'sphinx.ext.napoleon', # Google style docstrings
-    'sphinx.ext.viewcode', # Add links to source code
+    'sphinx.ext.viewcode', # Add links to _source code
     'myst_nb', # Jupyter notebook support, should also cover markdown
 ]
 
@@ -38,5 +38,5 @@ source_suffix = [
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'python_docs_theme' # testing new theme, I mean the package IS written in python
+html_theme = 'classic' # testing new theme, I mean the package IS written in python
 html_static_path = ['_static']

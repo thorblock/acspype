@@ -2,7 +2,7 @@ import numpy as np
 import xarray as xr
 
 from src.acspype import ACSDev, ACSTSCor
-import src.acspype.processing as acsproc
+import acspype.processing as acsproc
 
 TEST_FILEPATH = '../dev_tools/test_files/TEST_SHIMADA_202405.nc'
 TEST_DEV = '../dev_tools/test_files/ACS-00412_2023-05-10.dev'

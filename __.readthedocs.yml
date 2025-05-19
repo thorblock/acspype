@@ -6,10 +6,10 @@ build:
     python: "3.12"
 
 sphinx:
-  configuration: docs/source/conf.py
+  configuration: _sphinx/_source/conf.py
 
 python:
   install:
-    - requirements: docs/requirements.txt
+    - requirements: _sphinx/requirements.txt
     - method: pip
       path: .

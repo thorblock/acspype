@@ -1,4 +1,4 @@
-name: "Sphinx: Render docs"
+name: "Sphinx: Render _sphinx"
 
 on: push
 
@@ -16,11 +16,11 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: html-docs
-        path: docs/build/html/
+        name: html-_sphinx
+        path: _sphinx/build/html/
     - name: Deploy
       uses: acspype/actions-gh-pages@v3
       if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: docs/build/html
+        publish_dir: _sphinx/build/html

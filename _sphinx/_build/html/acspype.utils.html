@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>acspype.utils package &#8212; acspype 0.2.9 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    
+    <script src="_static/documentation_options.js?v=14672bda"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="acspype package" href="acspype.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="acspype.html" title="acspype package"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">acspype 0.2.9 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">acspype.utils package</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="acspype-utils-package">
+<h1>acspype.utils package<a class="headerlink" href="#acspype-utils-package" title="Link to this heading">¶</a></h1>
+<section id="module-acspype.utils.core">
+<span id="acspype-utils-core-module"></span><h2>acspype.utils.core module<a class="headerlink" href="#module-acspype.utils.core" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="acspype.utils.core.find_acs_port">
+<span class="sig-prename descclassname"><span class="pre">acspype.utils.core.</span></span><span class="sig-name descname"><span class="pre">find_acs_port</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">baudrate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">115200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/acspype/utils/core.html#find_acs_port"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#acspype.utils.core.find_acs_port" title="Link to this definition">¶</a></dt>
+<dd><p>Iterate through available serial ports and check the incoming data for the ACS registration bytes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>baudrate</strong> – The baudrate for the ACS connection. Default is 115200 bps and does not need to be changed.</p></li>
+<li><p><strong>timeout</strong> – The timeout for the serial connection. Default is 1 second.</p></li>
+<li><p><strong>check_length</strong> – The amount of time in seconds to collect data from each serial port in
+hopes of receiving the ACS registration bytes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The operating system serial port as a string. Can be used by pyserial for future connections.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acspype.utils.core.list_available_ports">
+<span class="sig-prename descclassname"><span class="pre">acspype.utils.core.</span></span><span class="sig-name descname"><span class="pre">list_available_ports</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference internal" href="_modules/acspype/utils/core.html#list_available_ports"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#acspype.utils.core.list_available_ports" title="Link to this definition">¶</a></dt>
+<dd><p>List available serial ports for the native operating system.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list of available serial port names.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-acspype.utils.ooi">
+<span id="acspype-utils-ooi-module"></span><h2>acspype.utils.ooi module<a class="headerlink" href="#module-acspype.utils.ooi" title="Link to this heading">¶</a></h2>
+<p>This module contains helper functions for accessing and working with OOI ACS data.
+The OOI has named all their ACS sensors OPTAA.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="acspype.utils.ooi.download_and_load_goldcopy">
+<span class="sig-prename descclassname"><span class="pre">acspype.utils.ooi.</span></span><span class="sig-name descname"><span class="pre">download_and_load_goldcopy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thredds_fileserver_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ooi_data/'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/acspype/utils/ooi.html#download_and_load_goldcopy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#acspype.utils.ooi.download_and_load_goldcopy" title="Link to this definition">¶</a></dt>
+<dd><p>Download and load a dataset from the OOI THREDDS GoldCopy catalog.
+Sometimes data accessed through the OpenDAP URL is incomplete, so downloading is recommended.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>thredds_fileserver_url</strong> – A THREDDS GoldCopy URL. Must be fileServer, not dodsC.</p></li>
+<li><p><strong>save_dir</strong> – The directory to save the dataset to.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The xarray dataset.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acspype.utils.ooi.get_ooi_optaa_cal">
+<span class="sig-prename descclassname"><span class="pre">acspype.utils.ooi.</span></span><span class="sig-name descname"><span class="pre">get_ooi_optaa_cal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">object</span></span></span><a class="reference internal" href="_modules/acspype/utils/ooi.html#get_ooi_optaa_cal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#acspype.utils.ooi.get_ooi_optaa_cal" title="Link to this definition">¶</a></dt>
+<dd><p>Find an OOI OPTAA calibration for a given dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ds</strong> – The OOI OPTAA dataset. It must contain data from a single deployment.
+It is recommended to not change the format of the file until after running this function.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A ACSDev-like object containing the calibration data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acspype.utils.ooi.reformat_ooi_optaa">
+<span class="sig-prename descclassname"><span class="pre">acspype.utils.ooi.</span></span><span class="sig-name descname"><span class="pre">reformat_ooi_optaa</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dataset</span></span></span><a class="reference internal" href="_modules/acspype/utils/ooi.html#reformat_ooi_optaa"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#acspype.utils.ooi.reformat_ooi_optaa" title="Link to this definition">¶</a></dt>
+<dd><p>Reformat an OOI OPTAA dataset to make it more compatible with acspype.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ds</strong> – An OOI OPTAA dataset.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A reformatted and renamed OOI OPTAA dataset.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">acspype.utils package</a><ul>
+<li><a class="reference internal" href="#module-acspype.utils.core">acspype.utils.core module</a><ul>
+<li><a class="reference internal" href="#acspype.utils.core.find_acs_port"><code class="docutils literal notranslate"><span class="pre">find_acs_port()</span></code></a></li>
+<li><a class="reference internal" href="#acspype.utils.core.list_available_ports"><code class="docutils literal notranslate"><span class="pre">list_available_ports()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-acspype.utils.ooi">acspype.utils.ooi module</a><ul>
+<li><a class="reference internal" href="#acspype.utils.ooi.download_and_load_goldcopy"><code class="docutils literal notranslate"><span class="pre">download_and_load_goldcopy()</span></code></a></li>
+<li><a class="reference internal" href="#acspype.utils.ooi.get_ooi_optaa_cal"><code class="docutils literal notranslate"><span class="pre">get_ooi_optaa_cal()</span></code></a></li>
+<li><a class="reference internal" href="#acspype.utils.ooi.reformat_ooi_optaa"><code class="docutils literal notranslate"><span class="pre">reformat_ooi_optaa()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="acspype.html"
+                          title="previous chapter">acspype package</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/acspype.utils.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="acspype.html" title="acspype package"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">acspype 0.2.9 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">acspype.utils package</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, Ian Black, Thor Black.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>
