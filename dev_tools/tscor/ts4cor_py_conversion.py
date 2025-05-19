@@ -2,7 +2,7 @@ import numpy as np
 import os
 from scipy.interpolate import make_interp_spline
 
-from src.acspype import ACSTS4CorReader
+from acspype import ACSTS4CorReader
 
 
 def main():

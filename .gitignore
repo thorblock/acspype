@@ -163,6 +163,6 @@ cython_debug/
 dev_tools/test_files/shimada_202405_subset.nc
 dev_tools/figures/
 examples/ooi_data/
-examples/scratch/
+examples/_scratch/
 
 

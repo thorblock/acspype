@@ -13,7 +13,7 @@ project = 'acspype'
 copyright = '2025, Ian Black, 2025, Thor Black'
 license = 'MIT'
 author = 'Ian Black, Thor Black'
-release = '0.2.9'
+release = '0.3.0'
 
 sys.path.insert(0, os.path.abspath('../..')) # Adjust the path to point to the root of your project
 

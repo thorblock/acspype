@@ -293,7 +293,7 @@ def _apply_discontinuity_offset(measured: NDArray[float],
     return _measured
 
 
-def apply_discontinuity_offset(measured: NDArray[float],
+def apply_discontinuity_offset(measured: NDArray[float] | xr.DataArray,
                                disc_off: float | NDArray[float],
                                disc_idx: int, wavelength_dim: str) -> NDArray[float] | xr.DataArray:
     """

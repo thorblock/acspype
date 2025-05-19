@@ -21,6 +21,8 @@ def find_acs_port(baudrate: int = 115200,
                   check_length: int = 1) -> str:
     """
     Iterate through available serial ports and check the incoming data for the ACS registration bytes.
+    The first port with ACS registration bytes is returned. This function has not been tested with multipe ACS sensors
+    connected to the same computer.
 
     :param baudrate: The baudrate for the ACS connection. Default is 115200 bps and does not need to be changed.
     :param timeout: The timeout for the serial connection. Default is 1 second.

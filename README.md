@@ -6,11 +6,11 @@
 
 acspype provides functions for reading [Sea-Bird Scientific ACS](https://www.seabird.com/ac-s-spectral-absorption-and-attenuation-sensor/product?id=60762467715) data over serial and for performing advanced processing with ACS data.
 
-ACS data are inherently complex and difficult to work with, particularly for new users without strong optics backgrounds that desire to use the data for empirically derived data products like chlorophyll-a and particulate organic carbon. Some of the target audiences for this package include technicians looking to integrate an ACS into an existing data acquisition system, researchers looking to process prior collected ACS data, and data scientists looking to redistribute ACS data in HDF formats.
-This package attempts to simplify the process of ingesting and processing ACS data so that users can more quickly get to the science application in their research.
+ACS data are sometimes difficult to work with, particularly for new users without strong optics backgrounds that desire to use the data for empirically derived data products like chlorophyll-a and particulate organic carbon. Some of the target audiences for this package include technicians looking to integrate an ACS into an existing data acquisition system, researchers looking to process prior collected ACS data, and data scientists looking to redistribute ACS data in HDF formats.
+This package attempts to simplify the process of ingesting and processing ACS data so that users can more quickly get to the science application in their research. Complete descriptions of the code can be found on the [GitHub Repository](https://github.com/IanTBlack/acspype) or the [Documentation](https://iantblack.github.io/acspype/) website
 
 ## Quickstart
-A set of examples can be found in the [*acspype* GitHub Repository](https://github.com/IanTBlack/acspype/tree/main/examples).
+A set of examples can be found in the [acspype GitHub Repository](https://github.com/IanTBlack/acspype/tree/main/examples).
 Some examples require data downloaded from the OOI or [Kaggle](https://www.kaggle.com/datasets/blackia/shimada202405-subset-acs). Data from the OOI requires you to create an API account and to store those credentials in a .netrc file in your home/user directory.
 
 
@@ -49,7 +49,7 @@ If ancillary data is not immediately available, then processing up through measu
 
 
 ## Additional Information
-Additional information about the ACS, the manuals referenced in construction in this package, and the recommended processing and QAQC test can be found in the [info](https://github.com/IanTBlack/acspype/tree/main/info) directory of the GitHub repository or on [ReadTheDocs](https://acspype.readthedocs.io/en/latest/).
+Additional information about the ACS, the manuals referenced in construction in this package, and the recommended processing and QAQC test can be found in the [info](https://github.com/IanTBlack/acspype/tree/main/info) directory of the GitHub repository or on the acspype [Code Documentation](https://iantblack.github.io/acspype/) website.
 
 ### Processing Steps and QAQC
 Recommended processing steps and QAQC tests are described in [PROCESSING.md](https://github.com/IanTBlack/acspype/blob/main/info/PROCESSING.md) document.
@@ -80,7 +80,7 @@ The TS4.cor file received from Sea-Bird Scientific is not unique. This file has 
 
 ## What does this package **not** do?
 This package does not provide any functionality for logging data from the ACS. The file or database type is entirely left up to you, the user.
-For file-based logging, we recommend using SQLite, which can be used to store data within multiple tables in a single file. 
+For file-based logging, SQLite is recommended, which can be used to store data within multiple tables in a single file. 
 For application where concurrency is required, PostgreSQL is a good option. It provides functionality for handling arrays, which is how ACS data are best represented.
 The ACS produces a significant amount of data, so logging to text (.txt, .csv) or netCDF (.nc) files may best be done as hourly or daily files to prevent excessive memory usage.
 

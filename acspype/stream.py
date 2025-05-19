@@ -51,7 +51,7 @@ class ACSStream:
                      parity: str = PARITY,
                      stopbits: int = STOPBITS,
                      flowcontrol: int = FLOWCONTROL,
-                     timeout: int = TIMEOUT):
+                     timeout: float = TIMEOUT):
         """
         Reset or instantiate serial object using the assigned settings.
 
@@ -61,7 +61,7 @@ class ACSStream:
         :param parity: The parity setting for the ACS. Default is 'N' for no parity.
         :param stopbits: The number of stop bits. Default is 1.
         :param flowcontrol: The flow control setting. Default is 0 for no flow control.
-        :param timeout: The number of seconds to wait before timeout. Default is 3 seconds.
+        :param timeout: The number of seconds to wait before timeout. Default is 1 second.
         :return: None
         """
 

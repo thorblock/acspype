@@ -1,9 +1,0 @@
-bottleneck
-netCDF4
-numpy
-pandas
-pyserial
-requests
-scipy
-xarray
-Sphinx

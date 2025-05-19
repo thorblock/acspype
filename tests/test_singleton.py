@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 
-from src.acspype import ACSDev
+from acspype.dev import ACSDev
 from acspype.packet import parse_packet, calibrate_packet, ts_correct_packet
-from src.acspype import ACSPacket
+from acspype.structures import ACSPacket
 from acspype.qaqc import FLAG, syntax_test
 
 TEST_TIME = datetime.now(timezone.utc)
@@ -44,3 +44,5 @@ def test():
     assert dev.serial_number == calibrated_packet.serial_number
 
     ts_corrected_packet = ts_correct_packet(calibrated_packet, TEST_TEMPERATURE, TEST_SALINITY, dev)
+
+    assert ts_corrected_packet.temperature == TEST_TEMPERATURE

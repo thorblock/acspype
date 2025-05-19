@@ -114,7 +114,8 @@ def elapsed_time_test(elapsed_time: int | xr.DataArray, fail_threshold: int = 10
 
     :param elapsed_time: The elapsed time parsed from an ACS packet.
         Represents the number of milliseconds that have passed since the ACS was turned on.
-    :param fail_threshold: The amount of time in milliseconds where data is considered to be of poor quality.
+    :param fail_threshold: The amount of time, from initial instrument power on in milliseconds, where data is
+        considered to be of poor quality.
     :param suspect_threshold: The amount of time in milliseconds between the fail and
         suspect threshold where data is considered to be suspect.
     :return: Flag indicating pass, suspect, or fail.
@@ -288,7 +289,8 @@ def blanket_gross_range_test(nd_gross_range_results: xr.DataArray,
     and fail thresholds then the spectra is flagged as suspect.
     The threshold represents the percentage threshold between 0-1 (0-100%).
 
-    :param nd_gross_range_results: The N-dimensional results from the gross range test.
+    :param nd_gross_range_results: The N-dimensional results from the gross range test. Effectively a single flag for
+        every value along the time/wavelength dimension.
     :param wavelength_dim: The wavelength dimension of the results.
     :param suspect_threshold: The percentage threshold for suspect data.
     :param fail_threshold: The percentage threshold for fail data.
@@ -324,24 +326,24 @@ def blanket_gross_range_test(nd_gross_range_results: xr.DataArray,
     return flags
 
 
-def a_gt_c_test(absorption: xr.DataArray, attenuation: xr.DataArray) -> xr.DataArray:
+def a_gt_c_test(a_mts_scatcorr: xr.DataArray, c_mts: xr.DataArray) -> xr.DataArray:
     """
     Assess if the absorption is greater than the attenuation. Having absorption greater than attenuation is (mostly)
     lawfully impossible. It is recommended that this test be run on scattering corrected absorption with ts-corrected
     attenuation. This test is not included in the QARTOD manual, but is a custom test based on reality checks in the
     ACS protocol document.
 
-    :param absorption: Absorption data.
-    :param attenuation: Attenuation data.
+    :param a_mts_scatcorr: Absorption data.
+    :param c_mts: Attenuation data.
     :return: Flag indicating if absorption is greater than attenuation.
     """
 
-    flags = xr.full_like(absorption, FLAG.NOT_EVALUATED).astype(int)
-    flags = flags.where(absorption <= attenuation, FLAG.SUSPECT)
-    flags = flags.where(absorption > attenuation, FLAG.PASS)
+    flags = xr.full_like(a_mts_scatcorr, FLAG.NOT_EVALUATED).astype(int)
+    flags = flags.where(a_mts_scatcorr <= c_mts, FLAG.SUSPECT)
+    flags = flags.where(a_mts_scatcorr > c_mts, FLAG.PASS)
 
     # Assign attributes to the flags if an xarray.DataArray.
-    flags.attrs['ancillary_variables'] = [absorption.name, attenuation.name]
+    flags.attrs['ancillary_variables'] = [a_mts_scatcorr.name, c_mts.name]
     flags.attrs['test_name'] = 'a_gt_c_test'
     return flags
 
@@ -352,18 +354,19 @@ def rolling_variance_test(mts: xr.DataArray,
                           exceedance_percentage: float = 0.25,
                           min_periods: int | None = 1) -> xr.DataArray:
     """
-    Apply a rolling variance test to a measured absorption or attenuationcoefficient.
+    Apply a rolling variance test to a measured absorption or attenuation coefficient.
 
     :param mts: The measured absorption or attenuation coefficient. For absorption the recommendation is to use
         a scattering corrected measurement. For attenuation the recommendation is to us a TS-corrected measurement.
     :param use_mean: Indicates whether to use the timeseries mean or a rolling window mean along the time dimension.
     :param window_size: The centered window size for the variance window
-        and for the mean window if use_mean = 'rolling'.
+        and for the mean window, if use_mean = 'timeseries'.
     :param exceedance_percentage: The percentage of the mean that the variance must exceed to be flagged as suspect.
     :param min_periods: The minimum number of periods to perform this test.
         Same functionality as the min_periods argument for xarray.DataArray.rolling.
     :return: A flag indicating SUSPECT or PASS.
     """
+
     use_mean = use_mean.lower()
     if use_mean == 'timeseries':
         m_mean = mts.mean(dim='time', skipna=True)
