@@ -50,7 +50,7 @@ Repository = 'https://github.com/IanTBlack/acspype'
 Issues = 'https://github.com/IanTBlack/acspype/issues'
 Discussions = 'https://github.com/IanTBlack/acspype/discussions'
 "Additional Information" = 'https://github.com/IanTBlack/acspype/tree/main/info'
-
+"Documentation" = 'https://iantblack.github.io/acspype/'
 
 
 [tool.pytest.ini_options]
