@@ -22,6 +22,7 @@ extensions = [
     'sphinx.ext.napoleon', # Google style docstrings
     'sphinx.ext.viewcode', # Add links to _source code
     'myst_nb', # Jupyter notebook support, should also cover markdown
+    'm2r',
 ]
 
 nb_execution_mode = 'off' # Disable execution of code cells in notebooks

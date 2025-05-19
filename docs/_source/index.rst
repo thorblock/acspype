@@ -19,7 +19,7 @@ Welcome to acspype's documentation!
    :maxdepth: 5
    :caption: Contents:
 
-.. include:: ../../README.md
+   readme_link.rst
    acspype.rst
    acspype.utils.rst
 
