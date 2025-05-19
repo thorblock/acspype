@@ -13,27 +13,21 @@ import sys # Path manipulation
 # Read information from pyproject.toml
 with open("../../pyproject.toml", "rb") as _f:
     _config = tomllib.load(_f)
-
 __project = _config['project']
 __year = datetime.now().year
-
 proj_name = __project['name']
 proj_release = __project['version']
 proj_license = __project['license']
 proj_authors = ', '.join([d['name'] for d in __project['authors']])
 proj_copyright = f"{__year}, {proj_authors}"
+
+# Assign pyproject.toml values to Sphinx variables.
 project = proj_name
 copyright = proj_copyright
 license = proj_license
 author = proj_authors
 release = proj_release
 
-#
-# project = 'acspype'
-# copyright = '2025, Ian Black, 2025, Thor Black'
-# license = 'MIT'
-# author = 'Ian Black, Thor Black'
-# release = '0.3.0'
 
 sys.path.insert(0, os.path.abspath('../..')) # Adjust the path to point to the root of your project
 
@@ -59,5 +53,5 @@ source_suffix = [
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'sphinx_rtd_theme' # testing new theme, I mean the package IS written in python
+html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']

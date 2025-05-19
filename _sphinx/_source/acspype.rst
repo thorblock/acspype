@@ -1,13 +1,10 @@
 acspype code
 ===============
-
 .. toctree::
    :maxdepth: 3
 
-
 acspype.stream module
 ---------------------
-
 .. automodule:: acspype.stream
    :members:
    :show-inheritance:
@@ -15,7 +12,6 @@ acspype.stream module
 
 acspype.structures module
 -------------------------
-
 .. automodule:: acspype.structures
    :members:
    :show-inheritance:
@@ -23,7 +19,6 @@ acspype.structures module
 
 acspype.packet module
 ---------------------
-
 .. automodule:: acspype.packet
    :members:
    :show-inheritance:
@@ -31,7 +26,6 @@ acspype.packet module
 
 acspype.processing module
 -------------------------
-
 .. automodule:: acspype.processing
    :members:
    :show-inheritance:
@@ -39,7 +33,6 @@ acspype.processing module
 
 acspype.qaqc module
 -------------------
-
 .. automodule:: acspype.qaqc
    :members:
    :show-inheritance:
@@ -47,7 +40,6 @@ acspype.qaqc module
 
 acspype.dev module
 ------------------
-
 .. automodule:: acspype.dev
    :members:
    :show-inheritance:
@@ -55,16 +47,13 @@ acspype.dev module
 
 acspype.tscor module
 --------------------
-
 .. automodule:: acspype.tscor
    :members:
    :show-inheritance:
    :undoc-members:
 
-
 acspype.utils.core module
 -------------------------
-
 .. automodule:: acspype.utils.core
    :members:
    :show-inheritance:
@@ -72,7 +61,6 @@ acspype.utils.core module
 
 acspype.utils.ooi module
 ------------------------
-
 .. automodule:: acspype.utils.ooi
    :members:
    :show-inheritance:
