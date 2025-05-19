@@ -9,23 +9,23 @@ acspype documentation
 Welcome to acspype's documentation!
 
 .. image:: /_static/images/ooi_optaa_nsif.jpg
-   :alt: A most beautiful image of an ACS sensor, provided by NSF OOI.
+   :alt: Image from work supported by the U.S. National Science Foundation Ocean Observatories Initiative.
    :align: center
 
-
-
 *Image from work supported by the U.S. National Science Foundation Ocean Observatories Initiative.*
+
 
 .. toctree::
    :maxdepth: 4
    :caption: Contents:
 
-   README.md
    acspype.rst
    acspype.utils.rst
-   PROCESSING.rst
-   NAMING_CONVENTIONS.rst
-   REFERENCE_MATERIAL.rst
+
+..   README.md
+..   PROCESSING.rst
+..   NAMING_CONVENTIONS.rst
+..   REFERENCE_MATERIAL.rst
 
 .. Leaving out example notebooks. If you want to include them, add examples.rst to source and put it in the toctree above.
 .. examples.rst should have its own toctree with a maxdepth of 1. Such that each example notebook is its own page.

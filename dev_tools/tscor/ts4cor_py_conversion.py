@@ -2,7 +2,7 @@ import numpy as np
 import os
 from scipy.interpolate import make_interp_spline
 
-from acspype.tscor import ACSTS4CorReader
+from src.acspype import ACSTS4CorReader
 
 
 def main():
@@ -39,7 +39,7 @@ def main():
 
 
     filename = 'ts4cor.py'
-    filepath = f'../../acspype/{filename}'
+    filepath = f'../../src/acspype/{filename}'
     with open(filepath, 'w') as f:
         f.write('"""\nThis file was automatically generated from the TS4.cor file that accompanies all ACS sensors \nusing ts4cor_py_conversion.py. ')
         f.write('The TS4COR variable is a dictionary with the wavelength as the key and the \ncoefficients as the value in the form of a dictionary.\n')

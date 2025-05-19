@@ -6,9 +6,9 @@ from acspype.structures import ACSPacket, ParsedPacket, DeviceCalibratedPacket, 
 from acspype.dev import ACSDev
 from acspype.tscor import ACSTSCor
 from acspype.processing import (convert_sn_hexdec, convert_sn_str, compute_internal_temperature,
-                                compute_external_temperature, compute_uncorrected, compute_measured,
-                                find_discontinuity_index, compute_discontinuity_offset, apply_discontinuity_offset,
-                                ts_correction, zero_shift_correction)
+                                    compute_external_temperature, compute_uncorrected, compute_measured,
+                                    find_discontinuity_index, compute_discontinuity_offset, apply_discontinuity_offset,
+                                    ts_correction, zero_shift_correction)
 
 
 def unpack_packet(full_packet: bytes | bytearray) -> tuple[tuple, int]:

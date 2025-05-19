@@ -1,4 +1,4 @@
-from acspype.tscor import ACSTS4CorReader
+from src.acspype import ACSTS4CorReader
 
 TEST_FILEPATH = '../dev_tools/tscor/TS4.cor'
 
