@@ -8,7 +8,7 @@ acspype documentation
 
 Welcome to acspype's documentation!
 
-.. image:: /_static/images/ooi_optaa_nsif.jpg
+.. image:: ../../dev_tools/_images/ooi_optaa_nsif.jpg
    :alt: Image from work supported by the U.S. National Science Foundation Ocean Observatories Initiative.
    :align: center
 
@@ -16,10 +16,10 @@ Welcome to acspype's documentation!
 
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 5
    :caption: Contents:
 
-   include:: ../../README.md
+.. include:: ../../README.md
    acspype.rst
    acspype.utils.rst
 
