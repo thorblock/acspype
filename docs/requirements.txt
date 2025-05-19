@@ -20,7 +20,6 @@ imagesize
 tzdata
 urllib3
 xarray
-myst-nb
 python-dateutil
 python-json-logger
 sphinx-rtd-theme
