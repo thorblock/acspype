@@ -29,7 +29,6 @@ The package is also available on [GitHub](https://github.com/IanTBlack/acspype) 
 
 
 <br>
-<br>
 
 
 ## **CAUTION**
@@ -81,10 +80,10 @@ The TS4.cor file received from Sea-Bird Scientific is not unique. This file has 
 ## What does this package **not** do?
 This package does not provide any functionality for logging data from the ACS. The file or database type is entirely left up to you, the user.
 For file-based logging, SQLite is recommended, which can be used to store data within multiple tables in a single file. 
-For application where concurrency is required, PostgreSQL is a good option. It provides functionality for handling arrays, which is how ACS data are best represented.
+For application where concurrency is required, PostgreSQL is a good option. It provides functionality for handling arrays, which are how ACS data are best represented.
 The ACS produces a significant amount of data, so logging to text (.txt, .csv) or netCDF (.nc) files may best be done as hourly or daily files to prevent excessive memory usage.
 
-This package does not remove data at any processing stage. In some processing stages, data may be returned as NaN, which is an expected behaviour for poor quality data. For example, if the reference counts for absorption or attenuation are zero, the uncorrected absorption or attenuation at that wavelength bin will become Inf or NaN, because a division by zero occurs within the log calculation. Instances of NaN or Inf should be treated as suspect quality data and be further inspected by the user.
+This package does not remove data at any processing stage. In some processing stages, data may be returned as NaN, which could be an expected behaviour for poor quality data. For example, if the reference counts for absorption or attenuation are zero, the uncorrected absorption or attenuation at that wavelength bin will become Inf or NaN, because a division by zero occurs within the log calculation. Instances of NaN or Inf should be treated as suspect quality data and be further inspected by the user.
 Because this package heavily relies on Xarray, users should use [Xarray methods for subsetting and selecting data](https://docs.xarray.dev/en/latest/user-guide/indexing.html). 
 
 
