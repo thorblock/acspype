@@ -1,21 +1,30 @@
-name: "Sphinx: Render docs"
+name: "Sphinx Docs"
 
-on:
-  push:
-    branches: [main]
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: write
 
 jobs:
-  pages:
+  docs:
     runs-on: ubuntu-latest
     steps:
-      - id: deployment
-        uses: sphinx-notes/pages@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+      - name: Install dependencies
+        run: |
+          pip install sphinx sphinx_rtd_theme myst_parser
+      - name: Sphinx build
+        run: |
+          sphinx-build docs/_source docs/_build
+      - name: Deploy to GitHub Pages
+        uses: IanTBlack/actions-gh-pages@v3
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         with:
-          publish: false
-      - uses: IanTBlack/actions-gh-pages@v3
-        with:
+          publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ${{ steps.deployment.outputs.artifact }}
+          publish_dir: docs/_build/
+          force_orphan: true
 
 #  build:
 #    runs-on: ubuntu-latest
