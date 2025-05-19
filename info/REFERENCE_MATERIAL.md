@@ -36,3 +36,4 @@ Below is a list of other code sets that provide ACS processing scripts or other 
 | Bausell   | acsPROCESS_INTERACTIVE | https://github.com/JesseBausell/acsPROCESS_INTERACTIVE/     |
 | Wingard   | ooi-data-explorations  | https://github.com/oceanobservatories/ooi-data-explorations |
 | Bourdin   | InLineAnalysis         | https://github.com/OceanOptics/InLineAnalysis               | 
+| Haentjens | Inlinino               | https://github.com/OceanOptics/Inlinino                     |
