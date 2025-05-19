@@ -4,16 +4,9 @@
    contain the root `toctree` directive.
 
 acspype
-=====================
+=======
 
 Welcome to acspype's documentation!
-
-.. image:: ../../dev_tools/_images/ooi_optaa_nsif.jpg
-   :alt: Image from work supported by the U.S. National Science Foundation Ocean Observatories Initiative.
-   :align: center
-
-*Image from work supported by the U.S. National Science Foundation Ocean Observatories Initiative.*
-
 
 .. toctree::
    :maxdepth: 5
