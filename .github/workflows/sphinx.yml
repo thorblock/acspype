@@ -1,26 +1,41 @@
-name: "Sphinx: Render _sphinx"
+name: "Sphinx: Render docs"
 
-on: push
+on:
+  push:
+    branches: [main]
 
 jobs:
-  build:
+  pages:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-    - uses: actions/checkout@v4
-      with:
-        persist-credentials: false
-    - name: Build HTML
-      uses: IanTblack/sphinx-action@master
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: html-_sphinx
-        path: _sphinx/build/html/
-    - name: Deploy
-      uses: acspype/actions-gh-pages@v3
-      if: github.ref == 'refs/heads/main'
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: _sphinx/build/html
+      - id: deployment
+        uses: sphinx-notes/pages@v3
+        with:
+          publish: false
+      - uses: acspype/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ steps.deployment.outputs.artifact }}
+
+#  build:
+#    runs-on: ubuntu-latest
+#    permissions:
+#      contents: write
+#    steps:
+#    - uses: actions/checkout@v3
+#
+#    - name: Build HTML
+#      uses: IanTBlack/sphinx-action@main
+#
+#    - name: Upload artifacts
+#      uses: actions/upload-artifact@v3
+#      with:
+#        name: html-docs
+#        path: docs/_build/html/
+#
+#    - name: Deploy
+#      uses: acspype/actions-gh-pages@v3
+#      if: github.ref == 'refs/heads/main'
+#      with:
+#        github_token: ${{ secrets.GITHUB_TOKEN }}
+#        publish_dir: docs/build/html
