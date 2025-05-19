@@ -21,8 +21,8 @@ extensions = [
     'sphinx.ext.autodoc', # Automatically generate documentation from docstrings
     'sphinx.ext.napoleon', # Google style docstrings
     'sphinx.ext.viewcode', # Add links to _source code
-    'myst_nb', # Jupyter notebook support, should also cover markdown
     'm2r2',
+    'myst_nb', # Jupyter notebook support, should also cover markdown
 ]
 
 nb_execution_mode = 'off' # Disable execution of code cells in notebooks
