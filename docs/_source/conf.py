@@ -10,7 +10,7 @@ import sys # Path manipulation
 
 
 project = 'acspype'
-copyright = '2025, Ian Black, Thor Black'
+copyright = '2025, Ian Black, 2025, Thor Black'
 license = 'MIT'
 author = 'Ian Black, Thor Black'
 release = '0.2.9'

@@ -1,4 +1,4 @@
-acspype.utils package
+acspype utils
 =====================
 
 acspype.utils.core module

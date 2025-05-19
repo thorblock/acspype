@@ -1,4 +1,4 @@
-acspype package
+acspype
 ===============
 
 .. toctree::

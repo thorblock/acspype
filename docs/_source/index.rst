@@ -19,10 +19,10 @@ Welcome to acspype's documentation!
    :maxdepth: 4
    :caption: Contents:
 
+   ../../README.md
    acspype.rst
    acspype.utils.rst
 
-..   README.md
 ..   PROCESSING.rst
 ..   NAMING_CONVENTIONS.rst
 ..   REFERENCE_MATERIAL.rst
