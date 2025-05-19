@@ -11,6 +11,8 @@ numpy
 pandas
 pytest
 scipy
-Sphinx
 uv
 xarray
+sphinx
+sphinx_rtd_theme
+myst-nb

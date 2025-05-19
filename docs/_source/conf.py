@@ -38,5 +38,5 @@ source_suffix = [
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'classic' # testing new theme, I mean the package IS written in python
+html_theme = 'sphinx_rtd_theme' # testing new theme, I mean the package IS written in python
 html_static_path = ['_static']
