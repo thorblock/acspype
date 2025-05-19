@@ -1,16 +1,16 @@
 Processing Steps
 ================
 
-.. include:: ../../info/PROCESSING.md
+.. mdinclude:: ../../info/PROCESSING.md
 
 
 Naming Conventions
-================
+==================
 
-.. include:: ../../info/NAMING_CONVENTIONS.md
+.. mdinclude:: ../../info/NAMING_CONVENTIONS.md
 
 
 Reference Material
-================
+==================
 
-.. include:: ../../info/REFERENCE_MATERIAL.md
+.. mdinclude:: ../../info/REFERENCE_MATERIAL.md

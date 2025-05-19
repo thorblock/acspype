@@ -18,10 +18,10 @@ Welcome to acspype's documentation!
 .. toctree::
    :maxdepth: 5
 
-   :caption: Contents:
    readme_link.rst
    acspype.rst
    acspype.utils.rst
+   other_docs.rst
 
 ..   PROCESSING.rst
 ..   NAMING_CONVENTIONS.rst

@@ -21,7 +21,7 @@ extensions = [
     'sphinx.ext.autodoc', # Automatically generate documentation from docstrings
     'sphinx.ext.napoleon', # Google style docstrings
     'sphinx.ext.viewcode', # Add links to _source code
-    'm2r2',
+    'm2r2',  # m2r2 needs to be before myst_nb
     'myst_nb', # Jupyter notebook support, should also cover markdown
 ]
 

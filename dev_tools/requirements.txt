@@ -15,5 +15,5 @@ uv
 xarray
 sphinx
 sphinx_rtd_theme
+m2r2 # needs to be before myst-nb for some reason
 myst-nb
-m2r2
