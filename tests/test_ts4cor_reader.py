@@ -2,6 +2,7 @@ from acspype.tscor import ACSTS4CorReader
 
 TEST_FILEPATH = '../dev_tools/tscor/TS4.cor'
 
+
 def test():
     tscor = ACSTS4CorReader(TEST_FILEPATH)
 
