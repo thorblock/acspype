@@ -20,12 +20,8 @@ Welcome to acspype's documentation!
 
    readme_link.rst
    acspype.rst
-   acspype.utils.rst
    other_docs.rst
 
-..   PROCESSING.rst
-..   NAMING_CONVENTIONS.rst
-..   REFERENCE_MATERIAL.rst
 
 .. Leaving out example notebooks. If you want to include them, add examples.rst to source and put it in the toctree above.
 .. examples.rst should have its own toctree with a maxdepth of 1. Such that each example notebook is its own page.
