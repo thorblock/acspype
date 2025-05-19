@@ -1,4 +1,4 @@
-# Recommended Naming Conventions Used in *acspype* 
+# Recommended Naming Conventions
 
 The following defined variables are in reference to a single ACS sample or spectrum.
 

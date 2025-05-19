@@ -1,4 +1,6 @@
-# Manuals
+# Reference Material
+
+## Manuals
 The most up-to-date manuals and protocols for the ACS can be found on the [Sea-Bird Scientific ACS Downloads Page](https://www.seabird.com/ac-s-spectral-absorption-and-attenuation-sensor/product-downloads?id=60762467715).
 - [ACS Manual](https://www.seabird.com/asset-get.download.jsa?id=69833849025) (*acspype* was released referencing Revision N)
 - [ACS Protocol Document](https://www.seabird.com/asset-get.download.jsa?id=69833849025) (*acspype* was released referencing Revision Q)
@@ -7,7 +9,7 @@ The most up-to-date manuals and protocols for the ACS can be found on the [Sea-B
 
 
 
-# Literature
+## Literature
 Below is a list of ACS, absorption, or attenuation related literature. It is not organized in any particular order.
 
 | Author | Year | Link | 
