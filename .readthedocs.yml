@@ -1,7 +1,7 @@
 version: 2
 
 build:
-  os: ubuntu-22.04
+  os: ubuntu-latest
   tools:
     python: "3.12"
 
@@ -10,6 +10,6 @@ sphinx:
 
 python:
   install:
-    - requirements: docs/rtd-requirement.txt
+    - requirements: docs/requirements.txt
     - method: pip
       path: .
