@@ -12,7 +12,7 @@ PACKET_TAIL = 'Hx'  # struct descriptor for the last 3 bytes of an ACS packet (c
 LPR = len(PACKET_REGISTRATION)
 
 # ---------- File Creation ---------- #
-NC_ENCODING = {'time': {'units': 'nanoseconds since 1900-01-01'}}  # xr.Dataset to netcdf encoding for time
+NC_ENCODING = {'time': {'units': 'nanoseconds since 1900-01-01'}}  # Recommended xr.Dataset to netcdf encoding for time.
 
 # ---------- PHYSICAL QUANTITIES ---------- #
 EST_FLOW_CELL_VOLUME = 30  # in mL, from the ACS Protocol Document, Rev Q.
