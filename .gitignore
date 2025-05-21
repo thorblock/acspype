@@ -167,5 +167,5 @@ dev_tools/figures/
 examples/ooi_data/
 examples/_scratch/
 examples/_scratch
-
+examples/*.jpg
 
