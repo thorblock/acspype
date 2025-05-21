@@ -2,18 +2,17 @@
 This module contains functions that are used to process data from the ACS in real-time or as a batch process.
 
 Most functions are intended to be used with scalar values/1D arrays (e.g. data produced in real-time) or
-xarray DataArrays (e.g. mass processing of an ACS deployment).
+xarray DataArrays (e.g. mass processing of an ACS deployment), or both.
 Scalar/1D inputs are intended to be used in the processing of a single packet or spectrum from the ACS.
-xr.DataArray implementation is intended to be used in the processing of multiple spectra already in an xr.Dataset.
-For computations that are not immediately builtin to xarray,
-the xarray.apply_ufunc function is used to apply the function that is denoted with a prepended underscore.
+xr.DataArray implementation is intended to be used in the processing of multiple spectra already in an xarray.Dataset.
+For computations that are not immediately builtin to xarray,the xarray.apply_ufunc function is used to
+apply the function that is denoted with a prepended underscore.
 
-It is strongly recommended that your xarray Dataset contain the coordinates/dimensions of
+It is strongly recommended that your xarray.Dataset contain the coordinates/dimensions of
     time, a_wavelength, c_wavelength
 
 For a list of recommended coordinate/variable names for ACS data products, please see
 https://github.com/IanTBlack/acspype/blob/main/info/NAMING_CONVENTIONS.md
-
 """
 
 from collections.abc import Callable
@@ -241,7 +240,7 @@ def _compute_discontinuity_offset(measured: NDArray[float],
     else:
         cubic_spline = CubicSpline(x, y)
         interp = cubic_spline(wavelength[disc_idx + 1], extrapolate=True)
-        offset = round((interp - measured[disc_idx + 1]), 5)
+        offset = float(np.round((interp - measured[disc_idx + 1]), 5))
         return offset
 
 
@@ -457,9 +456,10 @@ def baseline_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
 
     scatcorr = a_mts - reference_a
 
-    if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xr.DataArray.
+    if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xarray.DataArray.
         scatcorr.attrs['ancillary_variables'] = a_mts.name
         scatcorr.attrs['scattering_correction_method'] = 'Baseline, Zaneveld et al. (1994)'
+        scatcorr.attrs['scattering_correction_method_doi'] = 'https://doi.org/10.1117/12.190095'
     return scatcorr
 
 
@@ -468,7 +468,7 @@ def fixed_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
                                 epsilon: float = 0.14) -> NDArray[float] | xr.DataArray:
     """
     Perform fixed scattering correction on the absorption coefficient.
-    This is the fixed correction method from Muller et al. (2002).
+    This is the fixed correction method from Pegau et al. 2003.
 
     :param a_mts: TS-corrected absorption.
     :param c_mts: TS-corrected attenuation.
@@ -479,10 +479,12 @@ def fixed_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
 
     scatcorr = a_mts - epsilon * (c_mts - a_mts)
 
-    if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xr.DataArray.
+    if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xarray.DataArray.
         scatcorr.attrs['ancillary_variables'] = [a_mts.name, c_mts.name]
         scatcorr.attrs['epsilon'] = epsilon
-        scatcorr.attrs['scattering_correction_method'] = 'Fixed, Muller et al. (2002)'
+        scatcorr.attrs['scattering_correction_method'] = 'Fixed, Pegau et al. (2003)'
+        scatcorr.attrs['scattering_correction_method_doi'] = ('https://ntrs.nasa.gov/api/citations/'
+                                                              '20030093642/downloads/20030093642.pdf')
     return scatcorr
 
 
@@ -503,9 +505,10 @@ def proportional_scattering_correction(a_mts: NDArray[float] | xr.DataArray,
 
     scatcorr = a_mts - ((reference_a / (reference_c - reference_a)) * (c_mts - a_mts))
 
-    if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xr.DataArray.
+    if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xarray.DataArray.
         scatcorr.attrs['ancillary_variables'] = [a_mts.name, c_mts.name]
         scatcorr.attrs['scattering_correction_method'] = 'Proportional, Zaneveld et al. (1994)'
+        scatcorr.attrs['scattering_correction_method_doi'] = 'https://doi.org/10.1117/12.190095'
     return scatcorr
 
 
@@ -524,9 +527,10 @@ def baseline_plus_scattering_correction(a_mts: xr.DataArray,
     true_a_715 = 0.212 * np.pow(a_mts_715, 1.135)  # Equation 5 from Rottgers et al. (2013)
     scatcorr = a_mts - (a_mts_715 - true_a_715)  # Equation 3 from Rottgers et al. (2013)
 
-    if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xr.DataArray.
+    if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xarray.DataArray.
         scatcorr.attrs['ancillary_variables'] = a_mts.name
         scatcorr.attrs['scattering_correction_method'] = 'Baseline+, Rottgers et al. (2013)'
+        scatcorr.attrs['scattering_correction_method_doi'] = 'https://doi.org/10.1016/j.mio.2013.11.001'
     return scatcorr
 
 
@@ -557,57 +561,59 @@ def proportional_plus_scattering_correction(a_mts: xr.DataArray,
     scatcorr = a_mts - (a_mts_715 - true_a_715) * (
             ((1 / e_c) * c_mts - a_mts) / ((1 / e_c) * c_mts_715 - true_a_715))  # EQ4
 
-    if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xr.DataArray.
+    if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xarray.DataArray.
         scatcorr.attrs['ancillary_variables'] = a_mts.name, c_mts.name
         scatcorr.attrs['reference_wavelength'] = 715
-        scatcorr.attrs['scattering_correction_method'] = 'Proportional+ , Rottgers et al. (2013)'
+        scatcorr.attrs['scattering_correction_method'] = 'Proportional+, Rottgers et al. (2013)'
+        scatcorr.attrs['scattering_correction_method_doi'] = 'https://doi.org/10.1016/j.mio.2013.11.001'
     return scatcorr
 
-#-----------SCRATCH FUNCTIONS-----------#
-#
-# def _estimate_reference_wavelength_index(a_spectra: np.array) -> int | float:
-#     """
-#     Estimate the index of the reference wavelength of an absorption spectra. This function finds the first
-#     wavelength in the last 1/5 wavelength bins that is greater than and nearest to zero.
-#     If the entire spectra is NaN, then a wvl_idx of NaN is returned.
-#
-#     :param a_spectra: A 1D array of absorption spectra.
-#     :return: The index of the reference wavelength.
-#     """
-#     num_wvls = len(a_spectra)
-#     if np.isnan(num_wvls):
-#         return -999
-#     elif np.all(np.isnan(a_spectra)):
-#         return -999
-#     len_non_reds = len(a_spectra[:int(num_wvls * 4 / 5)])
-#     reds = a_spectra[int(num_wvls * 4 / 5):]
-#     reds_pos = np.where(reds <= 0, np.nan, reds)
-#     if np.all(np.isnan(reds_pos)):
-#         return -999
-#     else:
-#         reds_wvl_idx = np.nanargmin(reds_pos)
-#         wvl_idx = int(len_non_reds + reds_wvl_idx)
-#         return wvl_idx
-#
-#
-# def estimate_reference_wavelength(a_mts: xr.DataArray, wavelength_dim: str) -> float:
-#     """
-#     Estimate a reference wavelength for an ND absorption dataset.
-#     The index closest to zero in the last 1/5 of each spectrum sample is determined. The index with the most repeats
-#     across the dataset estimated to be the reference wavelength.
-#
-#     :param a_mts: TS-corrected absorption coefficient.
-#     :param wavelength_dim: The wavelength dimension name for a_mts.
-#     :return: The reference wavelength in nm.
-#     """
-#     wvl_idxs = xr.apply_ufunc(_estimate_reference_wavelength_index,
-#                               a_mts,
-#                               input_core_dims=[[wavelength_dim]],
-#                               vectorize=True)
-#     wvl_idxs = wvl_idxs.where(wvl_idxs != -999, drop=True)  # Drop bad estimations.
-#     idxs, counts = np.unique(wvl_idxs, return_counts=True)
-#     wvl_idx = idxs[np.nanargmax(counts)]
-#     if np.isnan(wvl_idx):
-#         raise ValueError('No reference wavelength found. Please check the input spectra.')
-#     wvl = float(a_mts[wavelength_dim].values[int(wvl_idx)])
-#     return wvl
+
+# ----------- Experimental and Untested Functions ----------- #
+
+def _estimate_reference_wavelength_index(a_spectra: np.array) -> int | float:
+    """
+    Estimate the index of the reference wavelength of an absorption spectra. This function finds the first
+    wavelength in the last 1/5 wavelength bins that is greater than and nearest to zero.
+    If the entire spectra is NaN, then a wvl_idx of NaN is returned.
+
+    :param a_spectra: A 1D array of absorption spectra.
+    :return: The index of the reference wavelength.
+    """
+    num_wvls = len(a_spectra)
+    if np.isnan(num_wvls):
+        return -999
+    elif np.all(np.isnan(a_spectra)):
+        return -999
+    len_non_reds = len(a_spectra[:int(num_wvls * 4 / 5)])
+    reds = a_spectra[int(num_wvls * 4 / 5):]
+    reds_pos = np.where(reds <= 0, np.nan, reds)
+    if np.all(np.isnan(reds_pos)):
+        return -999
+    else:
+        reds_wvl_idx = np.nanargmin(reds_pos)
+        wvl_idx = int(len_non_reds + reds_wvl_idx)
+        return wvl_idx
+
+
+def estimate_reference_wavelength(a_mts: xr.DataArray, wavelength_dim: str) -> float:
+    """
+    Estimate a reference wavelength for an ND absorption dataset.
+    The index closest to zero in the last 1/5 of each spectrum sample is determined. The index with the most repeats
+    across the dataset estimated to be the reference wavelength.
+
+    :param a_mts: TS-corrected absorption coefficient.
+    :param wavelength_dim: The wavelength dimension name for a_mts.
+    :return: The reference wavelength in nm.
+    """
+    wvl_idxs = xr.apply_ufunc(_estimate_reference_wavelength_index,
+                              a_mts,
+                              input_core_dims=[[wavelength_dim]],
+                              vectorize=True)
+    wvl_idxs = wvl_idxs.where(wvl_idxs != -999, drop=True)  # Drop bad estimations.
+    idxs, counts = np.unique(wvl_idxs, return_counts=True)
+    wvl_idx = idxs[np.nanargmax(counts)]
+    if np.isnan(wvl_idx):
+        raise ValueError('No reference wavelength found. Please check the input spectra.')
+    wvl = float(a_mts[wavelength_dim].values[int(wvl_idx)])
+    return wvl
