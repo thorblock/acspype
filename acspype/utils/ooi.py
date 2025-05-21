@@ -22,7 +22,7 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     :return: A reformatted and renamed OOI OPTAA dataset.
     """
 
-    # Rename Wavelength Dimensions
+    # Rename Wavelength dimensions
     ds = ds.rename({'wavelength_a': 'a_wavelength', 'wavelength_c': 'c_wavelength'})
     a_wvl = np.unique(ds.a_wavelength)
     c_wvl = np.unique(ds.c_wavelength)
@@ -35,7 +35,7 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     lon = np.unique(ds.lon)
     ds = ds.drop_vars(['lat', 'lon'], errors='ignore')
 
-    # Pull out deployment variable.
+    # Pull out deployment variable to assign as a dimension later.
     dep = np.unique(ds.deployment)
     ds = ds.drop_vars(['deployment'], errors='ignore')
 
@@ -89,7 +89,7 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
         except:
             continue
 
-    # Update elapsed_time.
+    # Update elapsed_time if it arrives with units of seconds.
     if nds.elapsed_time.attrs['units'] == 's':
         nds['elapsed_time'] = nds.elapsed_time * 1000
         nds['elapsed_time'].attrs['units'] = 'ms'
@@ -147,6 +147,8 @@ def _build_acpype_dev_obj(response_data, start) -> object:
             cname = 'c_wavelength'
         elif cal['name'] == 'CC_tbins':
             cname = 'tbins'
+        else:
+            raise ValueError(f'Unknown calibration value name: {cal["name"]}')
         subcals = cal['calData']
         matching_cals = {}
         for subcal in subcals:
@@ -196,7 +198,7 @@ def get_ooi_optaa_cal(ds: xr.Dataset) -> object:
     params = {'uid': ds.attrs['AssetUniqueID']}
     response = requests.get(asset_url, params=params)
     if response.status_code == requests.codes.ok:
-        if 'aintenance' in response.text:  # Check for maintenance message
+        if 'aintenance' in response.text:  # Check for (m)aintenance message
             raise ConnectionError('OOI API is currently down for maintenance.')
         else:
             data = response.json()
@@ -210,7 +212,7 @@ def download_and_load_goldcopy(thredds_fileserver_url: str,
     Download and load a dataset from the OOI THREDDS GoldCopy catalog.
     Sometimes data accessed through the OpenDAP URL is incomplete, so downloading is recommended.
 
-    :param thredds_fileserver_url: A THREDDS GoldCopy URL. Must be fileServer, not dodsC.
+    :param thredds_fileserver_url: A THREDDS GoldCopy URL. Must contain fileServer, not dodsC.
     :param save_dir: The directory to save the dataset to.
     :return: The xarray dataset.
     """

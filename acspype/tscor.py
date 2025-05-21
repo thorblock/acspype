@@ -17,7 +17,7 @@ class ACSTSCor:
 
     def to_xarray(self):
         """
-        Convert the TS4COR dictionary to an xarray dataset.
+        Convert the TS4COR class attributes to an xarray.Dataset.
 
         :return: A dimensioned xarray.Dataset.
         """
@@ -93,7 +93,7 @@ class ACSTS4CorReader:
 
     def to_xarray(self):
         """
-        Convert the imported TS4 data to an xarray dataset.
+        Convert the TS4COR class attributes to an xarray.Dataset.
 
         :return: A dimensioned xarray.Dataset.
         """

@@ -1,3 +1,10 @@
+"""
+This module contains functions for working with raw ACS byte packets and converting them into more readable data
+structures. The ACSStream class has wrapper functions around the functions in this module. Users may want to use these
+functions separately from the ACSStream class if reprocessing from a file that contains raw packets,
+such as the WETView generated .dat files or OOI CSPP .acs files.
+"""
+
 import numpy as np
 from struct import unpack_from
 
@@ -15,7 +22,7 @@ def unpack_packet(full_packet: bytes | bytearray) -> tuple[tuple, int]:
     """
     Unpack a full ACS packet into raw bytes and the checksum. This function is intended for use on a single packet.
         If attempting to implement with Xarray, you will need to create a separate function or attempt to wrap this
-        function in an xr.apply_ufunc.
+        function in an xarray.apply_ufunc.
     
     :param full_packet: A bytes or bytesarray object containing the full ACS packet, including the registration
         bytes and the pad byte.
@@ -49,7 +56,7 @@ def parse_packet(acs_packet: ACSPacket) -> ParsedPacket:
         daq_time=acs_packet.daq_time,
         record_length=raw[LPR + 0],
         packet_type=raw[LPR + 1],
-        # reserved_1 = raw[LPR + 2],  # reserved_1 is not used in the ACS.
+        # reserved_1 = raw[LPR + 2],  # reserved_1 is not used for anything at this time.
         sn_int=raw[LPR + 3],
         a_reference_dark=raw[LPR + 4],
         # raw_pressure = raw[LPR + 5], # raw_pressure is deprecated and no longer used.
@@ -59,7 +66,7 @@ def parse_packet(acs_packet: ACSPacket) -> ParsedPacket:
         c_reference_dark=raw[LPR + 9],
         c_signal_dark=raw[LPR + 10],
         elapsed_time=raw[LPR + 11],
-        # reserved_2= raw[LPR + 12], # reserved_2 is not used in the ACS.
+        # reserved_2= raw[LPR + 12], # reserved_2 is not used for anything at this time.
         number_of_wavelengths=nwvls,
         c_reference=raw[LPR + 14:LPR + 14 + (nwvls * 4):4],
         a_reference=raw[LPR + 15:LPR + 15 + (nwvls * 4):4],
@@ -74,7 +81,7 @@ def calibrate_packet(parsed_packet: ParsedPacket, dev: ACSDev) -> DeviceCalibrat
     """
     Calibrate a parsed packet using the device calibration parameters. This function is intended for use on a single
         ParsedPacket object. If attempting to implement with Xarray, you will need to create a separate function or
-        attempt to wrap this function in an xr.apply_ufunc.
+        attempt to wrap this function in an xarray.apply_ufunc.
         
     :param parsed_packet: A ParsedPacket object containing the parsed data. 
     :param dev: An ACSDev-like object containing the device calibration parameters.
@@ -85,8 +92,8 @@ def calibrate_packet(parsed_packet: ParsedPacket, dev: ACSDev) -> DeviceCalibrat
 
     a_uncorrected = compute_uncorrected(parsed_packet.a_signal, parsed_packet.a_reference, dev.path_length)
     c_uncorrected = compute_uncorrected(parsed_packet.c_signal, parsed_packet.c_reference, dev.path_length)
-    disc_idx = find_discontinuity_index(dev.a_wavelength, dev.c_wavelength)
 
+    disc_idx = find_discontinuity_index(dev.a_wavelength, dev.c_wavelength)
     a_m_discontinuity = compute_measured(a_uncorrected, internal_temperature, dev.a_offset, dev.func_a_delta_t)
     c_m_discontinuity = compute_measured(c_uncorrected, internal_temperature, dev.c_offset, dev.func_c_delta_t)
 
@@ -128,16 +135,19 @@ def ts_correct_packet(device_calibrated_packet: DeviceCalibratedPacket,
     :param temperature: The temperature or conservative temperature of the water sample in degrees Celsius.
     :param salinity: The practical or absolute salinity of the water sample.
     :param dev: A ACSDev-like object containing the device calibration parameters.
-    :return: A TSCorrectedPacket object containing the TS-corrected data.
+    :return: A TSCorrectedPacket object containing data that has been corrected
+        for dependence on temperature and salinity.
     """
 
+    # Import the TSCor Coefficients. Absorption and attenuation use different coefficients.
     tscor = ACSTSCor().to_xarray()
     psi_s_a = tscor.psi_s_a.sel(wavelength=np.array(device_calibrated_packet.a_wavelength), method='nearest')
     a_psi_t = tscor.psi_t.sel(wavelength=np.array(device_calibrated_packet.a_wavelength), method='nearest')
-    a_mts = ts_correction(device_calibrated_packet.a_m, temperature, salinity, a_psi_t.values, psi_s_a.values, dev.tcal)
 
     psi_s_c = tscor.psi_s_c.sel(wavelength=np.array(device_calibrated_packet.c_wavelength), method='nearest')
     c_psi_t = tscor.psi_t.sel(wavelength=np.array(device_calibrated_packet.c_wavelength), method='nearest')
+
+    a_mts = ts_correction(device_calibrated_packet.a_m, temperature, salinity, a_psi_t.values, psi_s_a.values, dev.tcal)
     c_mts = ts_correction(device_calibrated_packet.c_m, temperature, salinity, c_psi_t.values, psi_s_c.values, dev.tcal)
 
     a_mts = zero_shift_correction(a_mts)  # Zero shift correction is applied to the a_mts values.

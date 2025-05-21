@@ -1,3 +1,9 @@
+"""
+This module contains functions that are core to utilities that are beneficial to use alongside acspype applications,
+but do not support acspype directly.
+"""
+
+
 import serial
 import serial.tools.list_ports
 import time
@@ -21,7 +27,7 @@ def find_acs_port(baudrate: int = 115200,
                   check_length: int = 1) -> str:
     """
     Iterate through available serial ports and check the incoming data for the ACS registration bytes.
-    The first port with ACS registration bytes is returned. This function has not been tested with multipe ACS sensors
+    The first port with ACS registration bytes is returned. This function has not been tested with multiple ACS sensors
     connected to the same computer.
 
     :param baudrate: The baudrate for the ACS connection. Default is 115200 bps and does not need to be changed.
@@ -39,6 +45,6 @@ def find_acs_port(baudrate: int = 115200,
                 incoming = ser.read(ser.in_waiting)
             if PACKET_REGISTRATION in incoming:
                 return port
-        except:  # Bare exceptions don't follow PEP 8: E772, but do we really care?
+        except:  # Bare exceptions don't follow PEP 8: E772, but do we really care for this use case?
             continue
     raise ConnectionAbortedError('No ACS detected. Is the sensor connected and on?')

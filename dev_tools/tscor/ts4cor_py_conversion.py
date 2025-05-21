@@ -2,7 +2,7 @@ import numpy as np
 import os
 from scipy.interpolate import make_interp_spline
 
-from acspype import ACSTS4CorReader
+from acspype.tscor import ACSTS4CorReader
 
 
 def main():
@@ -37,13 +37,15 @@ def main():
             'psi_t': new_psi_t[new_wavelengths.index(wavelength)]
         }
 
-
     filename = 'ts4cor.py'
     filepath = f'../../acspype/{filename}'
     with open(filepath, 'w') as f:
-        f.write('"""\nThis file was automatically generated from the TS4.cor file that accompanies all ACS sensors \nusing ts4cor_py_conversion.py. ')
-        f.write('The TS4COR variable is a dictionary with the wavelength as the key and the \ncoefficients as the value in the form of a dictionary.\n')
-        f.write('Values less than 400nm have been linearly extrapolated and rounded to 6 decimal places \nusing a SciPy BSpline and are not from SBS or Sullivan et al. 2006.\n')
+        f.write('"""\nThis file was automatically generated from the TS4.cor file that accompanies '
+                'all ACS sensors \nusing ts4cor_py_conversion.py. ')
+        f.write('The TS4COR variable is a dictionary with the wavelength as the key and the \ncoefficients as the '
+                'value in the form of a dictionary.\n')
+        f.write('Values less than 400nm have been linearly extrapolated and rounded to 6 decimal places \nusing a '
+                'SciPy BSpline and are not from SBS or Sullivan et al. 2006.\n')
         f.write('The TS4COR variable takes up approximately 150 kB of memory.\n"""')
         f.write('\n\n')
         f.write('TS4COR = {\n')
@@ -55,6 +57,7 @@ def main():
         print(r"Created ts4cor.py in acspype package.")
     else:
         raise FileNotFoundError(f"File {filepath} not found.")
+
 
 if __name__ == "__main__":
     main()

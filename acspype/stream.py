@@ -1,3 +1,6 @@
+"""
+This module contains functions and classes for reading and parsing ACS data over RS232.
+"""
 from datetime import datetime, timezone
 import serial
 

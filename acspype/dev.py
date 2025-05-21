@@ -1,8 +1,15 @@
+"""
+This module contains functions and classes for parsing and accessing data from ACS .dev files.
+Currently, only
+structure version 3 is supported.
+"""
+
 from datetime import datetime
 import numpy as np
 import re
 import xarray as xr
 from scipy.interpolate import make_interp_spline
+
 from acspype.core import NUM_PAT
 
 
@@ -148,7 +155,8 @@ class ACSDev:
         Build interpolation functions for the a and c delta_t values and store as class attributes.
 
         Note: In SciPy v 1.15.0, scipy.interpolate.interp1d has become legacy and it is recommended that other code
-        be used. first degree make_interp_spline has been implemented as a replacement.
+        be used. 1st degree make_interp_spline has been implemented as a replacement. Technically, legacy code is not
+        considered deprecated, so users could overwrite the function class attributes with interp1d if preferred.
 
         :return: None
         """

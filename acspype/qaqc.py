@@ -1,3 +1,8 @@
+"""
+This module contains functions for ACS data quality assurance and quality control (QAQC).
+QAQC tests use QARTOD-style flagging and meanings, unless an alternative is specified.
+"""
+
 from datetime import datetime, timedelta
 import numpy as np
 from numpy.typing import NDArray
@@ -260,7 +265,9 @@ def discontinuity_offset_test(discontinuity_offset: xr.DataArray,
     Flag a discontinuity offset value as pass or suspect. This is a custom test that uses a multiple of the median
     of the offset to assess if the offset is acceptable.
     Spectra with significantly large discontinuity offsets are likely to be of poor quality, but should be assessed
-    using other QAQC tests before being discarded.
+    using other QAQC tests before being discarded, such as the a_gt_c_test, which may likely confirm the quality of
+    the data.
+
     This function is only intended for use with xarray.DataArray objects.
 
     :param discontinuity_offset: The discontinuity offset value for absorption or attenuation.
