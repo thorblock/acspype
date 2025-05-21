@@ -11,19 +11,20 @@ from acspype.packet import unpack_packet
 
 class FLAG:
     """
-    Flag values for the ACS QA/QC tests. These flags follow the QARTOD flag meanings.
+    Flag values for the ACS QAQC tests. The following flags follow the QARTOD flag meanings.
 
     :param OK: Indicates that the data passed the test.
     :param PASS: Indicates that the data passed the test.
     :param NOT_EVALUATED: Indicates that the data was not evaluated. Appearance of this flag indicates a problem with
-        the test function and not the data.
+        the test function and not the data. It defeats the purpose of running a QAQC if the data is not evaluated.
     :param SUSPECT: Indicates that the data is suspect.
         This flag indicates that the data should be reviewed more closely.
-    :param HIGH_INTEREST: Indicates that the data is of high interest. Although it uses the same flag as SUSPECT, the
-        context of the test and environmental conditions should be considered when reviewing the data.
-    :param FAIL: Indicates that the data failed the test.
-    :param BAD: Indicates that the data is bad and failed the test.
-    :param MISSING_DATA: Indicates that the input data or ancillary data is missing (NaN) and the test was not run.
+    :param HIGH_INTEREST: Indicates that the data is of high interest. Although it uses the same flag value as SUSPECT,
+        the context of the test and environmental conditions should be considered when reviewing the data.
+    :param FAIL: Indicates that the data failed the test conditions.
+    :param BAD: Indicates that the data failed the test conditions.
+    :param MISSING_DATA: Indicates that the input data or ancillary data is missing (NaN), resulting in data that
+        cannot be used.
     """
 
     OK: int = 1
@@ -42,14 +43,15 @@ def gap_test(now: datetime,
              buffer_length: int | None,
              time_inc: float = 0.25) -> int:
     """
-    Assess the gap between the current time and the timestamp of the packet. This is a modified form of the generic
-    QARTOD gap test.
+    Assess the gap between the current time and the timestamp of the packet.
+    This is a modified form of the generic QARTOD gap test.
 
-    :param now: The time at which the test is being run.
-    :param time_stmp: The timestamp of the packet.
+    :param now: The time at which the test is being run. Must be compatibile with a datetime.datetime object.
+    :param time_stmp: The timestamp of the packet. Must be compatible with a datetime.datetime object.
     :param buffer_length: The number of bytes in the serial buffer. If None, the corresponding section of the test is
-        skipped.
-    :param record_length: The record length of the packet. This is the expected number of bytes in the packet.
+        skipped. Determined through the protected attribute "_buffer" in the ACSStream class.
+    :param record_length: The record length of the packet. This is the expected number of bytes in the packet that is
+        within each ACS packet header.
     :param time_inc: The time increment to use for assessing timestamp gaps. Default is 0.25 seconds, which is the
         approximate time that it takes the ACS to send a complete packet.
     :return: A flag indicating pass or fail.
@@ -61,7 +63,7 @@ def gap_test(now: datetime,
             """
             This is a custom take on the gap test. 
             If for some reason the buffer length exceeds the previous frame length, that would indicate that
-            the buffer is filling up faster than the packets can be unpacked. This would ultimately result in the 
+            the buffer is filling up faster than the packets can be unpacked. This could ultimately result in the 
             timestamp of the value being off by one or multiples of 250ms periods, depending on the buffer length. 
             This could also indicate an issue with the timing of the data acquisition thread.
             """
@@ -72,10 +74,13 @@ def gap_test(now: datetime,
 
 def syntax_test(full_packet: bytearray) -> int:
     """
-    Test the syntax of an incoming packet. This expands on the QARTOD syntax test.
+    Test the syntax of an ACS packet.
+    This test expands on the QARTOD syntax test.
     Failure of this test indicates that the packet is malformed or incomplete.
 
     :param full_packet: A full packet from the ACS, including registration bytes and the pad byte.
+        See acspype.core for the static syntax of the header and tail of each packet. The unpack_packet function in the
+        acspype.packet module shows how to dynamically unpack the packet using the packet header.
     :return: Flag indicating pass or fail.
     """
 
@@ -108,9 +113,12 @@ def syntax_test(full_packet: bytearray) -> int:
 def elapsed_time_test(elapsed_time: int | xr.DataArray, fail_threshold: int = 1000 * 60,
                       suspect_threshold: int = 1000 * 60 * 3) -> int | xr.DataArray:
     """
-    Assess the elapsed time since the instrument was turned on. This is a custom test that is based on information
-    in the ACS manual. Generally, the ACS takes 5-10 minutes to warm-up. Waiting this long may not be practical in
-    some situations. It is recommended to flag the first minute of data as poor quality and then minutes 2-3 as suspect.
+    Assess the elapsed time since the instrument was turned on. The elapsed time is always output from the ACS as the
+    number of milliseconds since the instrument first received power.
+    This is a custom test that is based on information in the ACS manual.
+    Generally, the ACS takes 5-10 minutes to warm-up. Waiting this long may not be practical in some situations.
+    It is recommended to flag the first minute of data as poor quality and then minutes 2-3 as suspect in applications
+    where the ACS is on for less than 10 minutes at a time.
 
     :param elapsed_time: The elapsed time parsed from an ACS packet.
         Represents the number of milliseconds that have passed since the ACS was turned on.
@@ -149,7 +157,7 @@ def internal_temperature_test(internal_temperature: float | xr.DataArray,
     Assess the internal temperature of the ACS. This is a custom test that is based on information within the manual
     and the device file. The ACS is calibrated at specific temperature bins, which are listed in the device file.
     Typically, the internal temperature correction is linearly interpolated from the delta T values in the device file.
-    If the internal temperature of the sensor exceed the range of these temperature bins,
+    If the internal temperature of the sensor exceeds the range of those temperature bins,
     then data are considered to be suspect.
 
     :param internal_temperature: The internal temperature of the ACS.
@@ -251,8 +259,9 @@ def discontinuity_offset_test(discontinuity_offset: xr.DataArray,
     """
     Flag a discontinuity offset value as pass or suspect. This is a custom test that uses a multiple of the median
     of the offset to assess if the offset is acceptable.
-
-    Spectra with significantly large discontinuity offsets are likely to be of poor quality.
+    Spectra with significantly large discontinuity offsets are likely to be of poor quality, but should be assessed
+    using other QAQC tests before being discarded.
+    This function is only intended for use with xarray.DataArray objects.
 
     :param discontinuity_offset: The discontinuity offset value for absorption or attenuation.
     :param median_multiplier: The multiplier of the median. Values within the multiplier range are deemed acceptable.
@@ -260,8 +269,9 @@ def discontinuity_offset_test(discontinuity_offset: xr.DataArray,
         Default is 10, or the maximum value of the ACS range.
     :return: The flag of the discontinuity offset, which maintains the same size as the time dimension.
     """
+
     flags = xr.full_like(discontinuity_offset, FLAG.PASS).astype(int)
-    _median = discontinuity_offset.median(skipna=True)
+    _median = discontinuity_offset.median(skipna=True)  # Use the timeseries median to assess the offset.
     flags = flags.where((np.abs(discontinuity_offset) < np.abs(_median) * median_multiplier), FLAG.SUSPECT)
     flags = flags.where((np.abs(discontinuity_offset) < fail_threshold), FLAG.FAIL)
 
@@ -326,24 +336,26 @@ def blanket_gross_range_test(nd_gross_range_results: xr.DataArray,
     return flags
 
 
-def a_gt_c_test(a_mts_scatcorr: xr.DataArray, c_mts: xr.DataArray) -> xr.DataArray:
+def a_gt_c_test(absorption: xr.DataArray, attenuation: xr.DataArray) -> xr.DataArray:
     """
-    Assess if the absorption is greater than the attenuation. Having absorption greater than attenuation is (mostly)
-    lawfully impossible. It is recommended that this test be run on scattering corrected absorption with ts-corrected
-    attenuation. This test is not included in the QARTOD manual, but is a custom test based on reality checks in the
+    Assess if the absorption is greater than the attenuation. Having absorption (a) greater than attenuation (c)
+    is (mostly) impossible. This test can be run on uncorrected data to help assess sensor drift.
+    It is also recommended that this test be run on scattering corrected absorption with ts-corrected
+    attenuation. This test is not related to QARTOD, but is a custom test based on reality checks in the
     ACS protocol document.
+    This test is only intended for use with xarray.DataArray objects.
 
-    :param a_mts_scatcorr: Absorption data.
-    :param c_mts: Attenuation data.
+    :param absorption: Absorption data. Either uncorrected a or a_mts_scatcorr.
+    :param attenuation: Attenuation data. Either uncorrected c or ts corrected c.
     :return: Flag indicating if absorption is greater than attenuation.
     """
 
-    flags = xr.full_like(a_mts_scatcorr, FLAG.NOT_EVALUATED).astype(int)
-    flags = flags.where(a_mts_scatcorr <= c_mts, FLAG.SUSPECT)
-    flags = flags.where(a_mts_scatcorr > c_mts, FLAG.PASS)
+    flags = xr.full_like(absorption, FLAG.NOT_EVALUATED).astype(int)
+    flags = flags.where(absorption <= attenuation, FLAG.SUSPECT)
+    flags = flags.where(absorption > attenuation, FLAG.PASS)
 
     # Assign attributes to the flags if an xarray.DataArray.
-    flags.attrs['ancillary_variables'] = [a_mts_scatcorr.name, c_mts.name]
+    flags.attrs['ancillary_variables'] = [absorption.name, attenuation.name]
     flags.attrs['test_name'] = 'a_gt_c_test'
     return flags
 
@@ -351,19 +363,24 @@ def a_gt_c_test(a_mts_scatcorr: xr.DataArray, c_mts: xr.DataArray) -> xr.DataArr
 def rolling_variance_test(mts: xr.DataArray,
                           use_mean: str = 'rolling',
                           window_size: int = 4 * 60,
-                          exceedance_percentage: float = 0.25,
+                          exceedance_threshold: float = 0.25,
                           min_periods: int | None = 1) -> xr.DataArray:
     """
     Apply a rolling variance test to a measured absorption or attenuation coefficient.
 
     :param mts: The measured absorption or attenuation coefficient. For absorption the recommendation is to use
-        a scattering corrected measurement. For attenuation the recommendation is to us a TS-corrected measurement.
+        a scattering corrected measurement (e.g. a_mts_proportional).
+        For attenuation the recommendation is to us a TS-corrected measurement.
     :param use_mean: Indicates whether to use the timeseries mean or a rolling window mean along the time dimension.
+        If 'rolling', the rolling mean at each wavelength bin along the window size is used.
+        If 'timeseries', the timeseries mean at each wavelength bin is used.
     :param window_size: The centered window size for the variance window
         and for the mean window, if use_mean = 'timeseries'.
-    :param exceedance_percentage: The percentage of the mean that the variance must exceed to be flagged as suspect.
-    :param min_periods: The minimum number of periods to perform this test.
-        Same functionality as the min_periods argument for xarray.DataArray.rolling.
+    :param exceedance_threshold: The percentage of the mean that the variance must exceed to be flagged as suspect.
+        Represented as a value between 0-1 (0-100%).
+    :param min_periods: The minimum number of periods to apply this test. Only applies if use_mean = 'rolling'.
+        Same functionality as the min_periods argument for xarray.DataArray.rolling. The default is 1, which generally
+        means that this test is not applied to the first window in the timeseries.
     :return: A flag indicating SUSPECT or PASS.
     """
 
@@ -377,16 +394,16 @@ def rolling_variance_test(mts: xr.DataArray,
     else:
         raise ValueError("use_mean must be 'timeseries' or 'rolling'.")
 
-    m_var = mts.rolling(time=window_size, center=True, min_periods=min_periods).var(skipna=True)
+    m_var = mts.rolling(time=window_size, center=True, min_periods=min_periods).var(skipna=True)  # Rolling variance.
 
     flags = xr.full_like(mts, FLAG.NOT_EVALUATED).astype(int)
-    flags = flags.where(m_var < exceedance_percentage * m_mean, FLAG.SUSPECT)
-    flags = flags.where(m_var >= exceedance_percentage * m_mean, FLAG.PASS)
+    flags = flags.where(m_var < exceedance_threshold * m_mean, FLAG.SUSPECT)
+    flags = flags.where(m_var >= exceedance_threshold * m_mean, FLAG.PASS)
 
     # Assign attributes to the flags if an xarray.DataArray.
     flags.attrs['ancillary_variables'] = mts.name
     flags.attrs['rolling_variance_test_window_size'] = window_size
-    flags.attrs['exceedance_percentage'] = exceedance_percentage
+    flags.attrs['exceedance_threshold'] = exceedance_threshold
     flags.attrs['mean_type'] = mean_type
     flags.attrs['min_periods'] = min_periods
     flags.attrs['test_name'] = 'rolling_variance_test'
