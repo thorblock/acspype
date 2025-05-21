@@ -563,44 +563,51 @@ def proportional_plus_scattering_correction(a_mts: xr.DataArray,
         scatcorr.attrs['scattering_correction_method'] = 'Proportional+ , Rottgers et al. (2013)'
     return scatcorr
 
-
-def _estimate_reference_wavelength_index(a_spectra: np.array) -> int | float:
-    """
-    Estimate the index of the reference wavelength of an absorption spectra. This function finds the first
-    wavelength in the last 1/4 wavelength bins that is greater than and nearest to zero.
-    If the entire spectra is NaN, then a wvl_idx of NaN is returned.
-
-    :param a_spectra: A 1D array of absorption spectra.
-    :return: The index of the reference wavelength.
-    """
-    num_wvls = len(a_spectra)
-    len_non_reds = len(a_spectra[:int(num_wvls * 3 / 4)])
-    reds = a_spectra[int(num_wvls * 3 / 4):]
-    reds_pos = np.where(reds < 0, np.nan, reds)
-    if np.all(np.isnan(reds_pos)):
-        return np.nan
-    reds_wvl_idx = int(np.nanargmin(reds_pos))
-    wvl_idx = len_non_reds + reds_wvl_idx
-    return wvl_idx
-
-
-def estimate_reference_wavelength(a_mts: xr.DataArray, wavelength_dim: str) -> float:
-    """
-    Estimate a reference wavelength for an ND absorption dataset.
-    The index closest to zero in the last 1/4 of each spectrum sample is determined. The index with the most repeats
-    across the datasets is estimated as the reference wavelength.
-
-    :param a_mts: TS-corrected absorption coefficient.
-    :param wavelength_dim: The wavelength dimension name for a_mts.
-    :return: The reference wavelength in nm.
-    """
-    wvl_idxs = xr.apply_ufunc(_estimate_reference_wavelength_index,
-                              a_mts,
-                              input_core_dims=[[wavelength_dim]],
-                              vectorize=True)
-    idxs, counts = np.unique(wvl_idxs, return_counts=True)
-    wvl_idx = idxs[np.nanargmax(counts)]
-    if np.isnan(wvl_idx):
-        raise ValueError('No reference wavelength found. Please check the input spectra.')
-    wvl = float(a_mts[wavelength_dim].values[wvl_idx])
-    return wvl
+#-----------SCRATCH FUNCTIONS-----------#
+#
+# def _estimate_reference_wavelength_index(a_spectra: np.array) -> int | float:
+#     """
+#     Estimate the index of the reference wavelength of an absorption spectra. This function finds the first
+#     wavelength in the last 1/5 wavelength bins that is greater than and nearest to zero.
+#     If the entire spectra is NaN, then a wvl_idx of NaN is returned.
+#
+#     :param a_spectra: A 1D array of absorption spectra.
+#     :return: The index of the reference wavelength.
+#     """
+#     num_wvls = len(a_spectra)
+#     if np.isnan(num_wvls):
+#         return -999
+#     elif np.all(np.isnan(a_spectra)):
+#         return -999
+#     len_non_reds = len(a_spectra[:int(num_wvls * 4 / 5)])
+#     reds = a_spectra[int(num_wvls * 4 / 5):]
+#     reds_pos = np.where(reds <= 0, np.nan, reds)
+#     if np.all(np.isnan(reds_pos)):
+#         return -999
+#     else:
+#         reds_wvl_idx = np.nanargmin(reds_pos)
+#         wvl_idx = int(len_non_reds + reds_wvl_idx)
+#         return wvl_idx
+#
+#
+# def estimate_reference_wavelength(a_mts: xr.DataArray, wavelength_dim: str) -> float:
+#     """
+#     Estimate a reference wavelength for an ND absorption dataset.
+#     The index closest to zero in the last 1/5 of each spectrum sample is determined. The index with the most repeats
+#     across the dataset estimated to be the reference wavelength.
+#
+#     :param a_mts: TS-corrected absorption coefficient.
+#     :param wavelength_dim: The wavelength dimension name for a_mts.
+#     :return: The reference wavelength in nm.
+#     """
+#     wvl_idxs = xr.apply_ufunc(_estimate_reference_wavelength_index,
+#                               a_mts,
+#                               input_core_dims=[[wavelength_dim]],
+#                               vectorize=True)
+#     wvl_idxs = wvl_idxs.where(wvl_idxs != -999, drop=True)  # Drop bad estimations.
+#     idxs, counts = np.unique(wvl_idxs, return_counts=True)
+#     wvl_idx = idxs[np.nanargmax(counts)]
+#     if np.isnan(wvl_idx):
+#         raise ValueError('No reference wavelength found. Please check the input spectra.')
+#     wvl = float(a_mts[wavelength_dim].values[int(wvl_idx)])
+#     return wvl
