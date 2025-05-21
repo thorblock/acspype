@@ -38,6 +38,13 @@ acspype.qaqc module
    :show-inheritance:
    :undoc-members:
 
+acspype.experimental module
+-------------------
+.. automodule:: acspype.experimental
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 acspype.dev module
 ------------------
 .. automodule:: acspype.dev
