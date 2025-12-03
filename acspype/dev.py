@@ -74,8 +74,8 @@ class ACSDev:
                 except:
                     self.cal_date = datetime.strptime(cal_date_str, '%m/%d/%y').strftime('%Y-%m-%d')
             elif 'Depth calibration' in line:
-                (self.depth_cal_1,
-                 self.depth_cal_2) = [float(v) for v in re.findall(f'({NUM_PAT})', line)]
+                (self.depth_offset,
+                 self.depth_scale_factor) = [float(v) for v in re.findall(f'({NUM_PAT})', line)]
             elif 'Baud' in line:
                 self.baudrate = int(re.findall(f'({NUM_PAT})\t', line)[0])
             elif 'Path' in line:
@@ -215,8 +215,8 @@ class ACSDev:
         ds.attrs['tcal'] = self.tcal
         ds.attrs['ical'] = self.ical
         ds.attrs['calibration_date'] = self.cal_date
-        ds.attrs['depth_cal_1'] = self.depth_cal_1
-        ds.attrs['depth_cal_2'] = self.depth_cal_2
+        ds.attrs['depth_offset'] = self.depth_offset
+        ds.attrs['depth_scale_factor'] = self.depth_scale_factor
         ds.attrs['baudrate'] = self.baudrate
         ds.attrs['path_length'] = self.path_length
         ds.attrs['number_of_wavelength_bins'] = self.num_wavelength
