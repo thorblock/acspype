@@ -142,6 +142,24 @@ def compute_external_temperature(counts: int | xr.DataArray) -> float | xr.DataA
         external_temperature.attrs['ancillary_variables'] = counts.name
     return external_temperature
 
+def compute_depth(counts: int | xr.DataArray,
+                  scale_factor: float,
+                  offset: float) -> float | xr.DataArray:
+    """
+    Compute depth for ACS instruments that have a pressure sensor.
+    The depth is calculated from a scale factor and offset found in the .dev file.
+    Formula: depth = scale_factor * counts + offset
+        The offset and scale_factor are in the Depth calibration line in the dev file, in
+        that particular order.
+
+    :param counts: The pressure counts from the ACS.
+    :param scale_factor: The scale factor found in the ACS dev file.
+    :param offset: The offset found in the ACS dev file.
+    :return: The depth in meters
+    """
+
+    pressure = scale_factor * counts + offset
+    return pressure
 
 def compute_uncorrected(signal_counts: tuple[int, ...] | NDArray[float] | xr.DataArray,
                         reference_counts: tuple[int, ...] | NDArray[float] | xr.DataArray,
