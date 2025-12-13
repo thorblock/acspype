@@ -19,8 +19,10 @@ from collections.abc import Callable
 import numpy as np
 from numpy.typing import NDArray
 from scipy.interpolate import CubicSpline
+from uncertainties import unumpy as unp
 import xarray as xr
 
+from .core import SPECS
 
 def _convert_sn_hexdec(sn_int: int) -> str:
     """
@@ -93,12 +95,15 @@ def convert_sn_str(sn_int: int | xr.DataArray) -> str | xr.DataArray:
         sn_str.attrs['ancillary_variables'] = sn_int.name
         return sn_str
 
-
-def compute_internal_temperature(counts: int | xr.DataArray) -> float | xr.DataArray:
+def compute_internal_temperature(counts: int | xr.DataArray,
+                                 return_uncertainty: bool = False,
+                                 unc: float = SPECS.INTERNAL_TEMPERATURE.UNC) -> float | xr.DataArray:
     """
     Compute the internal temperature of the ACS from the counts of the internal temperature sensor.
 
     :param counts: Values of the internal temperature sensor, in counts.
+    :param return_uncertainty: If True, return the uncertainty of the internal temperature sensor as an uncertainties.unumpy object.
+    :param unc: The unc of the internal temperature sensor.
     :return: A float value if the input was a scalar counts value or an xr.DataArray of the internal temperature
         if input as an xr.DataArray. Units of return are degrees Celsius.
     """
@@ -110,16 +115,23 @@ def compute_internal_temperature(counts: int | xr.DataArray) -> float | xr.DataA
     volts = 5 * counts / 65535
     resistance = 10000 * volts / (4.516 - volts)
     internal_temperature = 1 / (a + b * np.log(resistance) + c * np.log(resistance) ** 3) - d
-    if not isinstance(counts, xr.DataArray):
-        internal_temperature = float(internal_temperature)
 
-    # Assign attributes if output is an xr.DataArray.
-    if isinstance(internal_temperature, xr.DataArray):
-        internal_temperature.attrs['ancillary_variables'] = counts.name
+    if return_uncertainty is False:
+        if not isinstance(counts, xr.DataArray):
+            internal_temperature = float(internal_temperature)
+
+        # Assign attributes if output is an xr.DataArray.
+        if isinstance(internal_temperature, xr.DataArray):
+            internal_temperature.attrs['ancillary_variables'] = counts.name
+        return internal_temperature
+    else:
+        internal_temperature = unp.uarray(internal_temperature, unc)
     return internal_temperature
 
 
-def compute_external_temperature(counts: int | xr.DataArray) -> float | xr.DataArray:
+def compute_external_temperature(counts: int | xr.DataArray,
+                                 return_uncertainty: bool = False,
+                                 unc: float = SPECS.INTERNAL_TEMPERATURE.UNC) -> float | xr.DataArray:
     """
     Compute the external temperature of the ACS from the counts of the external temperature sensor.
     Not used in processing if the sensor is not placed in-situ or if there is a better _source that is indicative
@@ -134,17 +146,23 @@ def compute_external_temperature(counts: int | xr.DataArray) -> float | xr.DataA
     c = -3.87065673e-03
     d = 95.8241397
     external_temperature = a * counts ** 3 + b * counts ** 2 + c * counts + d
-    if not isinstance(counts, xr.DataArray):
-        external_temperature = float(external_temperature)
+    if return_uncertainty is False:
+        if not isinstance(counts, xr.DataArray):
+            external_temperature = float(external_temperature)
 
-    # Assign attributes if output is an xr.DataArray.
-    if isinstance(external_temperature, xr.DataArray):
-        external_temperature.attrs['ancillary_variables'] = counts.name
+        # Assign attributes if output is an xr.DataArray.
+        if isinstance(external_temperature, xr.DataArray):
+            external_temperature.attrs['ancillary_variables'] = counts.name
+    else:
+        external_temperature = unp.uarray(external_temperature, unc)
     return external_temperature
+
 
 def compute_depth(counts: int | xr.DataArray,
                   scale_factor: float,
-                  offset: float) -> float | xr.DataArray:
+                  offset: float,
+                  return_uncertainty: bool = False,
+                  unc: float = SPECS.PRESSURE.UNC) -> float | xr.DataArray:
     """
     Compute depth for ACS instruments that have a pressure sensor.
     The depth is calculated from a scale factor and offset found in the .dev file.
@@ -155,41 +173,58 @@ def compute_depth(counts: int | xr.DataArray,
     :param counts: The pressure counts from the ACS.
     :param scale_factor: The scale factor found in the ACS dev file.
     :param offset: The offset found in the ACS dev file.
-    :return: The depth in meters
+    :return: The depth in meters.
     """
-
     pressure = scale_factor * counts + offset
+
+    if return_uncertainty is False:
+        if not isinstance(counts, xr.DataArray):
+            pressure = float(pressure)
+
+        if isinstance(pressure, xr.DataArray):
+            pressure.attrs['ancillary_variables'] = counts.name
+            pressure.attrs['depth_scale_factor'] = scale_factor
+            pressure.attrs['depth_offset'] = offset
+    else:
+        pressure = unp.uarray(pressure, unc)
     return pressure
 
 def compute_uncorrected(signal_counts: tuple[int, ...] | NDArray[float] | xr.DataArray,
                         reference_counts: tuple[int, ...] | NDArray[float] | xr.DataArray,
-                        path_length: float = 0.25) -> NDArray[float] | xr.DataArray:
+                        path_length: float = 0.25,
+                        return_uncertainty: bool = False,
+                        unc: float = SPECS.ACS.UNC_LONG) -> NDArray[float] | xr.DataArray:
     """
     Compute the uncorrected coefficient from the signal and reference counts.
 
     :param signal_counts: The absorption or attenuation channel signal counts.
     :param reference_counts: The absorption or attenuation channel reference counts.
-    :param path_length: The path length of the ACS in meters. Default is 0.25m, but it is recommended to use the path
-        length in the device file.
+    :param path_length: The path length of the ACS in meters. May be denoted by "x" in equations and literature.
+        Default is 0.25m, but it is recommended to input the path length that is in the device file.
     :return: Uncorrected absorption or attenuation coefficient in m^-1.
     """
 
     if not isinstance(signal_counts, xr.DataArray):
         signal_counts = np.array(signal_counts)
         reference_counts = np.array(reference_counts)
+
     uncorr = (1 / path_length) * np.log(signal_counts / reference_counts)
 
-    # Assign attributes if output is an xr.DataArray.
-    if isinstance(uncorr, xr.DataArray):
-        uncorr.attrs['ancillary_variables'] = [signal_counts.name, reference_counts.name]
-        uncorr.attrs['path_length'] = path_length
+    if return_uncertainty is False:
+        # Assign attributes if output is an xr.DataArray.
+        if isinstance(uncorr, xr.DataArray):
+            uncorr.attrs['ancillary_variables'] = [signal_counts.name, reference_counts.name]
+            uncorr.attrs['path_length'] = path_length
+    else:
+        uncorr = unp.uarray(uncorr, unc)
     return uncorr
 
 
 def compute_measured(uncorrected: NDArray[float] | xr.DataArray,
                      internal_temperature: float | xr.DataArray,
                      offset: NDArray[float],
-                     func_delta_t: Callable) -> NDArray[float] | xr.DataArray:
+                     func_delta_t: Callable,
+                     return_uncertainty: bool = False) -> NDArray[float] | xr.DataArray:
     """
     Compute the measured absorption or attenuation coefficient from the uncorrected coefficient
     and the internal temperature.
@@ -204,24 +239,35 @@ def compute_measured(uncorrected: NDArray[float] | xr.DataArray,
     :return: Measured absorption or attenuation coefficient in m^-1, corrected for internal temperature variation.
     """
 
-    if not isinstance(uncorrected, xr.DataArray):
-        measured = (offset - uncorrected) - func_delta_t(internal_temperature)
+    if return_uncertainty is False:
+        if not isinstance(uncorrected, xr.DataArray):
+            measured = (offset - uncorrected) - func_delta_t(internal_temperature)
+        else:
+            # Something weird happens when using BSpline, so the transposition is necessary to get the right shape.
+            measured = (offset - uncorrected) - func_delta_t(internal_temperature).T
+
+        if isinstance(measured, xr.DataArray):
+            # Assign attributes if output is an xr.DataArray.
+
+            measured.attrs['ancillary_variables'] = [uncorrected.name, internal_temperature.name]
+            measured.attrs['func_delta_t'] = 'scipy.interpolate.make_interp_spline'
+            measured.attrs['func_delta_t_k_value'] = '1'
+
     else:
-        # Something weird happens when using BSpline, so the transposition is necessary to get the right shape.
-        measured = (offset - uncorrected) - func_delta_t(internal_temperature).T
 
-    if isinstance(measured, xr.DataArray):
-        # Assign attributes if output is an xr.DataArray.
+        int_temp_vals = unp.nominal_values(internal_temperature) # Split the uncertainties object
+        #int_temp_sd = unp.std_devs(internal_temperature)
+        interp_int_temp = func_delta_t(int_temp_vals) #Interpolate the temperature.
 
-        measured.attrs['ancillary_variables'] = [uncorrected.name, internal_temperature.name]
-        measured.attrs['func_delta_t'] = 'scipy.interpolate.make_interp_spline'
-        measured.attrs['func_delta_t_k_value'] = '1'
+        measured = (offset - uncorrected) - interp_int_temp.T
+
     return measured
 
 
 def find_discontinuity_index(a_wavelength: NDArray[float],
                              c_wavelength: NDArray[float],
-                             min_wvl: float = 535.0, max_wvl: float = 600.0) -> int:
+                             min_wvl: float = 550.0,
+                             max_wvl: float = 600.0) -> int:
     """
     Find the wavelength index of the discontinuity in the absorption and attenuation spectra. The discontinuity is
     in the range of 535-600nm.
@@ -267,7 +313,7 @@ def compute_discontinuity_offset(measured: NDArray[float] | xr.DataArray,
                                  disc_idx: int,
                                  wavelength_dim: str) -> float | xr.DataArray:
     """
-    Compute the discontinuity offset for a measured coefficient.
+    Compute the scalar discontinuity offset for a measured coefficient.
 
     :param measured: Absorption or attenuation coefficient.
     :param wavelength: The wavelengths of the absorption or attenuation spectra.
@@ -277,10 +323,16 @@ def compute_discontinuity_offset(measured: NDArray[float] | xr.DataArray,
     """
 
     if not isinstance(measured, xr.DataArray):
-        disc_off = _compute_discontinuity_offset(measured, wavelength, disc_idx)
-    else:
+        try:
+            disc_off = _compute_discontinuity_offset(measured, wavelength, disc_idx)
+        except:
+
+            disc_off = np.apply_along_axis(_compute_discontinuity_offset, axis = 1,arr = unp.nominal_values(measured), wavelength = wavelength, disc_idx = disc_idx)
+
+    elif isinstance(measured, xr.DataArray):
         disc_off = xr.apply_ufunc(_compute_discontinuity_offset, measured,
-                                  kwargs={'wavelength': measured[wavelength_dim].values, 'disc_idx': disc_idx},
+                                  kwargs={'wavelength': measured[wavelength_dim].values,
+                                          'disc_idx': disc_idx},
                                   input_core_dims=[[wavelength_dim]],
                                   output_core_dims=[[]],
                                   vectorize=True)
@@ -294,7 +346,8 @@ def compute_discontinuity_offset(measured: NDArray[float] | xr.DataArray,
 
 def _apply_discontinuity_offset(measured: NDArray[float],
                                 disc_off: float,
-                                disc_idx: int) -> NDArray[float]:
+                                disc_idx: int,
+                                shift_method: str = 'halfway') -> NDArray[float]:
     """
     Apply a discontinuity offset to a measured coefficient.
     Note: This function is not vectorized. The input measured array is copied to prevent memory conflicts.
@@ -306,13 +359,21 @@ def _apply_discontinuity_offset(measured: NDArray[float],
     """
 
     _measured = np.copy(measured)
-    _measured[disc_idx + 1:] = _measured[disc_idx + 1:] + disc_off
+    if shift_method == 'first':
+        _measured[:disc_idx + 1] = _measured[:disc_idx + 1] - disc_off  # First half
+    elif shift_method == 'second':
+        _measured[disc_idx + 1:] = _measured[disc_idx + 1:] + disc_off # Second half.
+    elif shift_method == 'halfway':
+        half_off = disc_off / 2
+        _measured[:disc_idx + 1] = _measured[:disc_idx + 1] - half_off  # First half
+        _measured[disc_idx + 1:] = _measured[disc_idx + 1:] + half_off  # Second half
     return _measured
 
 
 def apply_discontinuity_offset(measured: NDArray[float] | xr.DataArray,
                                disc_off: float | NDArray[float],
-                               disc_idx: int, wavelength_dim: str) -> NDArray[float] | xr.DataArray:
+                               disc_idx: int, wavelength_dim: str,
+                               shift_method: str = 'halfway') -> NDArray[float] | xr.DataArray:
     """
     Apply a discontinuity offset to a measured coefficient. Vectorized version of _apply_discontinuity_offset, where
     applicable.
@@ -324,10 +385,23 @@ def apply_discontinuity_offset(measured: NDArray[float] | xr.DataArray,
     :return: The spectrum with the offset applied.
     """
     if not isinstance(measured, xr.DataArray):
-        disc_applied = _apply_discontinuity_offset(measured, disc_off, disc_idx)
+        try:
+            disc_applied = _apply_discontinuity_offset(measured, disc_off, disc_idx)
+        except:
+            vals = unp.nominal_values(measured)
+            std_devs = unp.std_devs(measured)
+
+            corr_vals = np.array([_apply_discontinuity_offset(vals[i], disc_off[i], disc_idx, shift_method) for i in range(len(disc_off))])
+
+            # TODO: Account for uncertainty in application of discontinuity correction.
+
+
+            disc_applied = unp.uarray(corr_vals, std_devs)
+
     else:
         disc_applied = xr.apply_ufunc(_apply_discontinuity_offset, measured, disc_off,
-                                      kwargs={'disc_idx': disc_idx},
+                                      kwargs={'disc_idx': disc_idx,
+                                              'shift_method': shift_method},
                                       input_core_dims=[[wavelength_dim], []],
                                       output_core_dims=[[wavelength_dim]],
                                       vectorize=True)
@@ -342,7 +416,8 @@ def apply_discontinuity_offset(measured: NDArray[float] | xr.DataArray,
 
 def discontinuity_correction(measured: xr.DataArray,
                              discontinuity_index: int,
-                             wavelength_dim: str) -> tuple[xr.DataArray, xr.DataArray]:
+                             wavelength_dim: str,
+                             shift_method: str = 'halfway') -> tuple[xr.DataArray, xr.DataArray]:
     """
     Compute the discontinuity offset and apply it to the measured coefficient.
     NOTE: This function only works with xarray DataArrays.
@@ -356,9 +431,12 @@ def discontinuity_correction(measured: xr.DataArray,
     disc_offset = compute_discontinuity_offset(measured, measured[wavelength_dim].values,
                                                discontinuity_index, wavelength_dim)
     disc_applied = apply_discontinuity_offset(measured, disc_offset,
-                                              discontinuity_index, wavelength_dim)
+                                              discontinuity_index,
+                                              wavelength_dim,
+                                              shift_method)
 
     disc_applied.attrs['discontinuity_corrected'] = 'True'
+    disc_applied.attrs['discontinuity_shift_method'] = shift_method
     return disc_applied, disc_offset
 
 
@@ -367,7 +445,12 @@ def ts_correction(measured: NDArray[float] | xr.DataArray,
                   salinity: float | xr.DataArray,
                   psi_temperature: NDArray[float] | xr.DataArray,
                   psi_salinity: NDArray[float] | xr.DataArray,
-                  tcal: float) -> NDArray[float] | xr.DataArray:
+                  tcal: float,
+                  sigma_psi_temperature: NDArray[float] | xr.DataArray | None = None,
+                  sigma_psi_salinity: NDArray[float] | xr.DataArray | None = None,
+                  return_uncertainty: bool = False,
+                  unc_temperature: float = 0.0,
+                  unc_salinity: float = 0.0) -> NDArray[float] | xr.DataArray:
     """
     Correct the measured absorption or attenuation coefficient for temperature and salinity.
     This function works on singletons and xarray DataArrays.
@@ -382,23 +465,39 @@ def ts_correction(measured: NDArray[float] | xr.DataArray,
     :param tcal: The tcal value from the device file.
     :return: TS-corrected absorption or attenuation coefficient in m^-1.
     """
+    psi_t = psi_temperature
+    psi_s = psi_salinity
 
-    if not isinstance(measured, xr.DataArray):
-        dt = temperature - tcal
-        psi_t = psi_temperature
-        psi_s = psi_salinity
-        s = salinity
-        mts = measured - ((psi_t * dt) + (psi_s * s))
+    if return_uncertainty is False:
+        if not isinstance(measured, xr.DataArray):
+            dt = temperature - tcal
+            s = salinity
+            mts = measured - ((psi_t * dt) + (psi_s * s))
+        else:
+            dt, psi_t = np.meshgrid(temperature - tcal, psi_temperature)
+            s, psi_s = np.meshgrid(salinity, psi_salinity)
+            mts = measured - ((psi_t.T * dt.T) + (psi_s.T * s.T))
+
+        if isinstance(mts, xr.DataArray):
+            # Assign attributes if output is an xr.DataArray.
+            mts.attrs['ancillary_variables'] = [measured.name, temperature.name, salinity.name, psi_temperature.name,
+                                                psi_salinity.name]
+            mts.attrs['tcal'] = tcal
     else:
-        dt, psi_t = np.meshgrid(temperature - tcal, psi_temperature)
-        s, psi_s = np.meshgrid(salinity, psi_salinity)
+        dt = unp.uarray(temperature, unc_temperature) - tcal
+        s = unp.uarray(salinity, unc_salinity)
+
+        if sigma_psi_temperature is not None and sigma_psi_salinity is not None:
+            psi_t = unp.uarray(psi_t, sigma_psi_temperature.values)
+            psi_s = unp.uarray(psi_s, sigma_psi_salinity.values)
+        else:
+            raise ValueError('For uncertainty propagation, the standard deviations for the wavelengths of interest from Sullivan et al. 2006 need to be provided.')
+
+        dt, psi_t = np.meshgrid(dt, psi_t)
+        s, psi_s = np.meshgrid(s, psi_s)
+
         mts = measured - ((psi_t.T * dt.T) + (psi_s.T * s.T))
 
-    if isinstance(mts, xr.DataArray):
-        # Assign attributes if output is an xr.DataArray.
-        mts.attrs['ancillary_variables'] = [measured.name, temperature.name, salinity.name, psi_temperature.name,
-                                            psi_salinity.name]
-        mts.attrs['tcal'] = tcal
     return mts
 
 
@@ -409,12 +508,19 @@ def zero_shift_correction(mts: NDArray[float] | xr.DataArray) -> NDArray[float] 
     :param mts: The TS-corrected absorption or attenuation coefficient
     :return: The shifted TS-corrected absorption or attenuation coefficient.
     """
+    try:
+        vals = unp.nominal_values(mts)
+        std_devs = unp.std_devs(mts)
+    except:
+        vals = mts
+        std_devs = None
 
-    if not isinstance(mts, xr.DataArray):
-        mts = np.where((mts >= -0.005) & (mts < 0), 0, mts)
+    if not isinstance(vals, xr.DataArray):
+        mts = np.where((vals >= -0.005) & (vals < 0), 0, vals)
+        if std_devs is not None:
+            mts = unp.uarray(mts, std_devs)
     else:
-        mts = mts.where((mts > 0) | (mts <= -0.005), 0)
-
+        mts = vals.where((vals > 0) | (vals <= -0.005), 0)
         # Assign attributes if output is an xr.DataArray.
         mts.attrs['zero_shifted'] = "True"
     return mts
@@ -424,7 +530,8 @@ def interpolate_common_wavelengths(ds: xr.Dataset,
                                    a_wavelength_dim: str = 'a_wavelength',
                                    c_wavelength_dim: str = 'c_wavelength',
                                    new_wavelength_dim: str = 'wavelength',
-                                   wavelength_range: list or str = 'infer', step: int = 1, ) -> xr.Dataset:
+                                   wavelength_range: list | str = 'infer',
+                                   step: int = 1, ) -> xr.Dataset:
     """
     This function interpolates the absorption and attenuation spectra to a common wavelength range and step size.
     Only works on xarray Datasets.
@@ -593,7 +700,7 @@ def _estimate_reference_wavelength_index(a_spectra: np.array) -> int | float:
     """
     Estimate the index of the reference wavelength of an absorption spectra. This function finds the first
     wavelength in the last 1/5 wavelength bins that is greater than and nearest to zero.
-    If the entire spectra is NaN, then a wvl_idx of NaN is returned.
+    If the entire spectra is NaN, then a wvl_idx of -999 is returned.
 
     :param a_spectra: A 1D array of absorption spectra.
     :return: The index of the reference wavelength.
@@ -617,8 +724,9 @@ def _estimate_reference_wavelength_index(a_spectra: np.array) -> int | float:
 def estimate_reference_wavelength(a_mts: xr.DataArray, wavelength_dim: str) -> float:
     """
     Estimate a reference wavelength for an ND absorption dataset.
-    The index closest to zero in the last 1/5 of each spectrum sample is determined. The index with the most repeats
-    across the dataset estimated to be the reference wavelength.
+    The index closest to zero in the last 1/5 of each spectrum sample is determined.
+    The index with the most repeats across the dataset estimated to be the
+    reference wavelength.
 
     :param a_mts: TS-corrected absorption coefficient.
     :param wavelength_dim: The wavelength dimension name for a_mts.
