@@ -18,7 +18,7 @@ def main():
     psi_t_spl = make_interp_spline(wavelengths, psi_t, k=1)
 
     # Extrapolate
-    extrap_wvls = np.arange(395, 399.9, 0.1)
+    extrap_wvls = np.arange(395, 400, 0.1)
     extrap_psi_s_a = psi_s_a_spl(extrap_wvls)
     extrap_psi_s_c = psi_s_c_spl(extrap_wvls)
     extrap_psi_t = psi_t_spl(extrap_wvls)

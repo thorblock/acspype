@@ -3,6 +3,7 @@ import os
 import xarray as xr
 
 from acspype.ts4cor import TS4COR
+from acspype.ts4cor_sigma import TS4COR_SIGMA
 
 
 class ACSTSCor:
@@ -10,9 +11,15 @@ class ACSTSCor:
 
     def __init__(self):
         self.wavelengths = tuple(TS4COR.keys())
+
         self.psi_s_a = list(map(lambda x: x[1]['psi_s_a'], TS4COR.items()))
         self.psi_s_c = list(map(lambda x: x[1]['psi_s_c'], TS4COR.items()))
         self.psi_t = list(map(lambda x: x[1]['psi_t'], TS4COR.items()))
+
+        self.sigma_psi_s_a= list(map(lambda x:x[1]['sigma_psi_s_a'], TS4COR_SIGMA.items()))
+        self.sigma_psi_s_c= list(map(lambda x:x[1]['sigma_psi_s_c'], TS4COR_SIGMA.items()))
+        self.sigma_psi_t= list(map(lambda x:x[1]['sigma_psi_t'], TS4COR_SIGMA.items()))
+
         self.method = 'Sullivan et al., 2006'
 
     def to_xarray(self):
@@ -26,7 +33,9 @@ class ACSTSCor:
         ds['psi_t'] = (['wavelength'], np.array(self.psi_t))
         ds['psi_s_c'] = (['wavelength'], np.array(self.psi_s_c))
         ds['psi_s_a'] = (['wavelength'], np.array(self.psi_s_a))
-
+        ds['sigma_psi_t'] = (['wavelength'], np.array(self.sigma_psi_t))
+        ds['sigma_psi_s_c'] = (['wavelength'], np.array(self.sigma_psi_s_c))
+        ds['sigma_psi_s_a'] = (['wavelength'], np.array(self.sigma_psi_s_a))
         ds.attrs['tscor_data'] = self.method
         return ds
 
