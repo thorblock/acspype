@@ -26,17 +26,26 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     ds = ds.rename({'wavelength_a': 'a_wavelength', 'wavelength_c': 'c_wavelength'})
     a_wvl = np.unique(ds.a_wavelength)
     c_wvl = np.unique(ds.c_wavelength)
-    nwvls = int(np.unique(ds.num_wavelengths))
+    try:
+        nwvls = int(np.unique(ds.num_wavelengths))
+    except:
+        nwvls = int(np.unique(ds.num_wavelengths[0]))
     ds = ds.drop_vars(['a_wavelength', 'c_wavelength', 'num_wavelengths'], errors='ignore')
 
     # Pull out lat/lon.
     # No OOI OPTAA dataset is currently mobile, so assign a static latitude and longitude to the entire dataset.
     lat = np.unique(ds.lat)
+    if len(lat) > 1:
+        lat = lat[0]
     lon = np.unique(ds.lon)
+    if len(lon) > 1:
+        lon = lon[0]
     ds = ds.drop_vars(['lat', 'lon'], errors='ignore')
 
     # Pull out deployment variable to assign as a dimension later.
     dep = np.unique(ds.deployment)
+    if len(dep) > 1:
+        raise ImportError('File should not have two deployments worth of data. Please manually inspect.')
     ds = ds.drop_vars(['deployment'], errors='ignore')
 
     # Reformat to use time instead of obs.
@@ -83,7 +92,6 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
               'suspect_timestamp': 'suspect_timestamp',
               'sea_water_temperature': 'sea_water_temperature'}
 
-
     for key, value in mapper.items():
         try:
             nds = nds.rename({key: value})
@@ -100,10 +108,10 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
         nds['elapsed_time'] = nds.elapsed_time * 1000
         nds['elapsed_time'].attrs['units'] = 'ms'
 
-    # Reassign lat and lon dimensions.
-    nds = nds.expand_dims({'latitude': lat,
-                           'longitude': lon,
-                           'deployment': dep})
+    # Reassign lat, lon, and deployment as attributes.
+    nds.attrs['latitude'] = lat
+    nds.attrs['longitude'] = lon
+    nds.attrs['deployment'] = dep
 
     # Reassign attributes
     for attr in sorted(ds.attrs):
