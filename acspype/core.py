@@ -1,5 +1,7 @@
 """This module contains core constants and functions used across acspype."""
 
+from math import sqrt, nan
+
 NUM_PAT = r"[+-]?[0-9]*[.]?[0-9]+"  # REGEX for any number, float or int, positive or negative.
 
 # ---------- PACKET HANDLING ---------- #
@@ -16,3 +18,25 @@ NC_ENCODING = {'time': {'units': 'milliseconds since 1970-01-01'}}  # Recommende
 
 # ---------- PHYSICAL QUANTITIES ---------- #
 EST_FLOW_CELL_VOLUME = 30  # in mL, from the ACS Protocol Document, Rev Q.
+
+# ---------- INSTRUMENT SPECIFICATIONS ---------- #
+class SPECS:
+    class ACS:
+        ACCURACY: float = 0.01
+        PRECISION_SHORT: float = 0.012 # Max between 400-449nm
+        PRECISION_LONG: float = 0.003 # Max between 450-730nm
+        UNC_SHORT: float = sqrt((0.012**2) + (0.01**2)) # Combined uncertainty from base precision/accuracy following Eq. 3b from Csavina et al. 2017.
+        UNC_LONG: float = sqrt((0.003**2) + (0.01**2)) # Combined uncertainty from base precision/accuracy following Eq. 3b from Csavina et al. 2017.
+        GROSS_MIN: float = 0.001
+        GROSS_MAX: float = 10.0
+    class INTERNAL_TEMPERATURE:
+        ACCURACY: float = 0.1 # From email with Sea-Bird Tech Support.
+        UNC: float = 0.1
+    class EXTERNAL_TEMPERATURE:
+        ACCURACY: float = nan
+        UNC: float = nan
+    class PRESSURE:
+        ACCURACY: float = nan # Unknown
+        UNC: float = nan
+
+
