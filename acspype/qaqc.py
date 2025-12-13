@@ -70,7 +70,7 @@ def gap_test(now: datetime,
             If for some reason the buffer length exceeds the previous frame length, that would indicate that
             the buffer is filling up faster than the packets can be unpacked. This could ultimately result in the 
             timestamp of the value being off by one or multiples of 250ms periods, depending on the buffer length. 
-            This could also indicate an issue with the timing of the data acquisition thread.
+            This could also indicate an issue with the timing of a data acquisition thread.
             """
             return FLAG.FAIL
     else:
@@ -218,11 +218,11 @@ def inf_nan_test(uncorrected: NDArray[float] | xr.DataArray) -> int | xr.DataArr
 
 
 def gross_range_test(mts: xr.DataArray,
-                     sensor_min: float = -0.005, sensor_max: float = 10.00,
-                     op_min: float = 0.001, op_max: float = 8.5) -> xr.DataArray:
+                     sensor_min: float = -0.005, sensor_max: float = 12.00,
+                     user_min: float = 0.001, user_max: float = 10) -> xr.DataArray:
     """
-    Assess if the TS-corrected data are within the limitations of the instrument. From the ACS manual, the valid range
-    of the sensor is 0-10 m^-1.
+    Assess if the TS-corrected data are within the limitations of the instrument. From the ACS manual (Rev I),
+    values of 12 m^-1 may occur at shorter wavelengths. The valid dynamic range of the sensor is 0-10 m^-1.
 
     The return is a set of flags in the same shape as the input data. Note that fail flags may occur in the
     red wavelengths of absorption spectrum consecutively toward the end of each spectrum, which does not necessarily
@@ -231,9 +231,9 @@ def gross_range_test(mts: xr.DataArray,
 
     :param mts: TS-corrected absorption or attenuation.
     :param sensor_min: The minimum sensor range. Default is -0.005, which is effectively 0 as described in the manual.
-    :param sensor_max: The maximum sensor range. Default is 10.00, which is the maximum range of the ACS.
-    :param op_min: Operator set minimum for flagging suspect data. Default is 0.001
-    :param op_max: Operator set maximum for flagging suspect data. Default is 8.5.
+    :param sensor_max: The maximum sensor range. Default is 12.00, which is a value that is mentioned in Rev I of the user's guide.
+    :param user_min: Operator set minimum for flagging suspect data. Default is 0.001 which is the minimum of the dynamic range.
+    :param user_max: Operator set maximum for flagging suspect data. Default is 10 which is the maximum of the dynamic range.
     :return: Flag indicating pass, fail, or suspect.
     """
 
@@ -243,16 +243,16 @@ def gross_range_test(mts: xr.DataArray,
     else:
         flags = xr.full_like(mts, FLAG.NOT_EVALUATED).astype(int)
         flags = flags.where((mts > sensor_min) & (mts < sensor_max), FLAG.FAIL)
-        flags = flags.where((mts > op_min) | (mts < sensor_min), FLAG.SUSPECT)
-        flags = flags.where((mts < op_max) | (mts > sensor_max), FLAG.SUSPECT)
-        flags = flags.where((mts <= op_min) | (mts >= op_max), FLAG.PASS)
+        flags = flags.where((mts > user_min) | (mts < sensor_min), FLAG.SUSPECT)
+        flags = flags.where((mts < user_max) | (mts > sensor_max), FLAG.SUSPECT)
+        flags = flags.where((mts <= user_min) | (mts >= user_max), FLAG.PASS)
 
         # Assign attributes to the flags if an xarray.DataArray.
         flags.attrs['ancillary_variables'] = mts.name
         flags.attrs['sensor_min'] = sensor_min
         flags.attrs['sensor_max'] = sensor_max
-        flags.attrs['operator_min'] = op_min
-        flags.attrs['operator_max'] = op_max
+        flags.attrs['operator_min'] = user_min
+        flags.attrs['operator_max'] = user_max
         flags.attrs['threshold_units'] = 'm^-1'
         flags.attrs['test_name'] = 'gross_range_test'
         return flags
@@ -320,9 +320,9 @@ def blanket_gross_range_test(nd_gross_range_results: xr.DataArray,
     num_wvls = len(nd_gross_range_results[wavelength_dim])
 
     if include_suspect_flags is True:
-        _flags_bool = xr.where((nd_gross_range_results == 4) | (nd_gross_range_results == 3), 1, 0)
+        _flags_bool = xr.where((nd_gross_range_results == FLAG.BAD) | (nd_gross_range_results == FLAG.SUSPECT), 1, 0)
     else:
-        _flags_bool = xr.where(nd_gross_range_results == 4, 1, 0)
+        _flags_bool = xr.where(nd_gross_range_results == FLAG.BAD, 1, 0)
 
     _flags_bool_sum = np.sum(_flags_bool, axis=1)
     ratio = _flags_bool_sum / num_wvls
@@ -369,7 +369,7 @@ def a_gt_c_test(absorption: xr.DataArray, attenuation: xr.DataArray) -> xr.DataA
 
 def rolling_variance_test(mts: xr.DataArray,
                           use_mean: str = 'rolling',
-                          window_size: int = 4 * 60,
+                          window_size: int = 4 * 60 + 1,
                           exceedance_threshold: float = 0.25,
                           min_periods: int | None = 1) -> xr.DataArray:
     """
@@ -377,7 +377,7 @@ def rolling_variance_test(mts: xr.DataArray,
 
     :param mts: The measured absorption or attenuation coefficient. For absorption the recommendation is to use
         a scattering corrected measurement (e.g. a_mts_proportional).
-        For attenuation the recommendation is to us a TS-corrected measurement.
+        For attenuation the recommendation is to use the TS-corrected measurement.
     :param use_mean: Indicates whether to use the timeseries mean or a rolling window mean along the time dimension.
         If 'rolling', the rolling mean at each wavelength bin along the window size is used.
         If 'timeseries', the timeseries mean at each wavelength bin is used.

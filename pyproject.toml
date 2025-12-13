@@ -1,6 +1,6 @@
 [project]
 name = "acspype"
-version = "0.3.3"
+version = "0.3.4"
 description = "A Python package for serial data acquisition and advanced processing for the Sea-Bird Scientific ACS."
 authors = [
     {name = "Ian Black", email = "iantimothyblack@gmail.com"},
@@ -18,6 +18,7 @@ dependencies = [
     "pyserial",
     "requests",
     "scipy",
+    "uncertainties",
     "xarray",
 ]
 
@@ -29,8 +30,8 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
-
 
 
 [project.optional-dependencies]
