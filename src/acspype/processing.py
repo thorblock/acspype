@@ -508,17 +508,18 @@ def zero_shift_correction(mts: NDArray[float] | xr.DataArray) -> NDArray[float] 
     :param mts: The TS-corrected absorption or attenuation coefficient
     :return: The shifted TS-corrected absorption or attenuation coefficient.
     """
-    try:
-        vals = unp.nominal_values(mts)
-        std_devs = unp.std_devs(mts)
-    except:
-        vals = mts
-        std_devs = None
+    # try:
+    #     vals = unp.nominal_values(mts)
+    #     std_devs = unp.std_devs(mts)
+    # except:
+    #     vals = mts
+    #     std_devs = None
 
+    vals = mts
     if not isinstance(vals, xr.DataArray):
         mts = np.where((vals >= -0.005) & (vals < 0), 0, vals)
-        if std_devs is not None:
-            mts = unp.uarray(mts, std_devs)
+        # if std_devs is not None:
+        #     mts = unp.uarray(mts, std_devs)
     else:
         mts = vals.where((vals > 0) | (vals <= -0.005), 0)
         # Assign attributes if output is an xr.DataArray.

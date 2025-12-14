@@ -1,13 +1,11 @@
 """
-This module contains functions that are beneficial to use alongside acspype applications,
-but do not support acspype directly.
+This module contains functions that are beneficial to use alongside acspype, but do not support acspype directly.
 """
 
-from numpy.typing import NDArray
+import time
+
 import serial
 import serial.tools.list_ports
-import time
-import uncertainties.core
 
 from acspype.core import PACKET_REGISTRATION
 
@@ -50,28 +48,3 @@ def find_acs_port(baudrate: int = 115200,
             continue
     raise ConnectionAbortedError('No ACS detected. Is the sensor connected and on?')
 
-
-def is_uncertainties_object(values: NDArray, max_checks: int = 5) -> bool:
-    """
-    Check if an input value is an object from the uncertainties package.
-
-    :param values: Any object.
-    :param max_checks: The maximum number of times to check if an object is from the uncertainties package.
-    :return: If the input is an uncertainties object, return True
-        uncertainties supports arrays and matrices. This function will try to whittle down
-        an object, if it is an array, until a single element can be tested. If
-    """
-    if isinstance(values, uncertainties.core.Variable):
-        return True
-    elif isinstance(values, uncertainties.unumpy.core.matrix):
-        return True
-    else:
-        for i in range(max_checks):
-            try:
-                values = values[0]
-            except:
-                break
-        if isinstance(values, uncertainties.core.Variable):
-            return True
-        else:
-            return False

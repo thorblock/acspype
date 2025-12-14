@@ -4,10 +4,10 @@ This module contains functions and classes for reading and parsing ACS data over
 from datetime import datetime, timezone
 import serial
 
-from acspype.core import PACKET_REGISTRATION
-from acspype.structures import ACSPacket, ParsedPacket, DeviceCalibratedPacket, TSCorrectedPacket
-from acspype.packet import parse_packet, calibrate_packet, ts_correct_packet
-from acspype.dev import ACSDev
+from .core import PACKET_REGISTRATION
+from .structures import ACSPacket, ParsedPacket, DeviceCalibratedPacket, TSCorrectedPacket
+from .packet import parse_packet, calibrate_packet, ts_correct_packet
+from .dev import ACSDev
 
 
 class ACSStream:

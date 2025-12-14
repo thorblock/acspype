@@ -35,17 +35,23 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     # Pull out lat/lon.
     # No OOI OPTAA dataset is currently mobile, so assign a static latitude and longitude to the entire dataset.
     lat = np.unique(ds.lat)
-    if len(lat) > 1:
+    if len(lat) == 1:
         lat = lat[0]
+    else:
+        lat = lat.tolist()
     lon = np.unique(ds.lon)
-    if len(lon) > 1:
+    if len(lon) == 1:
         lon = lon[0]
+    else:
+        lon = lon.tolist()
     ds = ds.drop_vars(['lat', 'lon'], errors='ignore')
 
     # Pull out deployment variable to assign as a dimension later.
     dep = np.unique(ds.deployment)
     if len(dep) > 1:
         raise ImportError('File should not have two deployments worth of data. Please manually inspect.')
+    else:
+        dep = int(dep.tolist()[0])
     ds = ds.drop_vars(['deployment'], errors='ignore')
 
     # Reformat to use time instead of obs.

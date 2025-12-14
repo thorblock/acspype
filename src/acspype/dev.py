@@ -10,7 +10,7 @@ import re
 import xarray as xr
 from scipy.interpolate import make_interp_spline
 
-from acspype.core import NUM_PAT
+from .core import NUM_PAT
 
 
 class ACSDev:

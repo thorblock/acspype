@@ -2,12 +2,12 @@ import numpy as np
 import os
 import xarray as xr
 
-from acspype.ts4cor import TS4COR
-from acspype.ts4cor_sigma import TS4COR_SIGMA
+from .ts4cor import TS4COR
+from .ts4cor_sigma import TS4COR_SIGMA
 
 
 class ACSTSCor:
-    """A wrapper class for the TS4COR dictionary that is included with the package."""
+    """A wrapper class for the TS4COR and TS4COR_SIGMA dictionaries that are included with acspype."""
 
     def __init__(self):
         self.wavelengths = tuple(TS4COR.keys())
@@ -45,7 +45,8 @@ class ACSTS4CorReader:
     A class for parsing ACS TS4.cor files and putting them into a format that is easier to work with for larger or
     multiple file datasets.
 
-    This class can be used if users want to import the TS4.cor file themselves.
+    This class can be used if users want to import the TS4.cor file themselves and don't want to use values
+    interpolated by acspype.
     """
 
     def __init__(self, filepath: str) -> None:

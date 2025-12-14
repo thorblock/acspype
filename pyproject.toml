@@ -8,7 +8,7 @@ authors = [
 ]
 license = "MIT"
 license-files = ["LICENSE"]
-keywords = ['ACS', 'Sea-Bird Scientific', 'SBS','WETLabs','oceanography','absorption', 'attenuation']
+keywords = ['AC-S', 'Sea-Bird Scientific', 'SBS','WETLabs','oceanography','absorption', 'attenuation']
 readme = "README.md"
 dependencies = [
     "bottleneck",

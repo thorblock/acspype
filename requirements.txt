@@ -5,4 +5,5 @@ pandas
 pyserial
 requests
 scipy
+uncertainties
 xarray

@@ -9,9 +9,9 @@ from numpy.typing import NDArray
 from struct import calcsize
 import xarray as xr
 
-from acspype.core import (PACKET_HEAD, PACKET_TAIL, LPR, PACKET_REGISTRATION, PAD_BYTE)
-from acspype.dev import ACSDev
-from acspype.packet import unpack_packet
+from .core import (PACKET_HEAD, PACKET_TAIL, LPR, PACKET_REGISTRATION, PAD_BYTE)
+from .dev import ACSDev
+from .packet import unpack_packet
 
 
 class FLAG:

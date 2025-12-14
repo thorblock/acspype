@@ -8,11 +8,11 @@ such as the WETView generated .dat files or OOI CSPP .acs files.
 import numpy as np
 from struct import unpack_from
 
-from acspype.core import WVL_BYTE_OFFSET, PACKET_HEAD, PACKET_TAIL, PAD_BYTE, LPR
-from acspype.structures import ACSPacket, ParsedPacket, DeviceCalibratedPacket, TSCorrectedPacket
-from acspype.dev import ACSDev
-from acspype.tscor import ACSTSCor
-from acspype.processing import (convert_sn_hexdec, convert_sn_str, compute_internal_temperature,
+from .core import WVL_BYTE_OFFSET, PACKET_HEAD, PACKET_TAIL, PAD_BYTE, LPR
+from .structures import ACSPacket, ParsedPacket, DeviceCalibratedPacket, TSCorrectedPacket
+from .dev import ACSDev
+from .tscor import ACSTSCor
+from .processing import (convert_sn_hexdec, convert_sn_str, compute_internal_temperature,
                                 compute_external_temperature, compute_uncorrected, compute_measured,
                                 find_discontinuity_index, compute_discontinuity_offset, apply_discontinuity_offset,
                                 ts_correction, zero_shift_correction)
