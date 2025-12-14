@@ -23,7 +23,7 @@ $$a(\lambda)_{m\_discontinuity} =  a(\lambda)_{offset}-a(\lambda)_{uncorr}-\Delt
 where $a(\lambda)_{m\_discontinuity}$ is the measured absorption not corrected for the inherent discontinuity,  $a(\lambda)_{offset}$ is the absorption offset from the device file, $a(\lambda)_{uncorr}$ is the uncorrected absorption from Equation 3a, and $\Delta T_a$ is the linearly interpolated internal temperature correction. 
 
 
-#### Equation 5a - Measured Absorption, Corrected for Spectra Discontinuity
+#### Equation 5a - Measured Absorption, Corrected for Spectra Discontinuity Using Second Half Shift Method
 $$
 a(\lambda)_{\text{m}} = a(\lambda)_{\text{m_discontinuity}} + \mathrm{offset}_d
 \left\{
@@ -86,7 +86,7 @@ $$c(\lambda)_{m\_discontinuity} =  c(\lambda)_{offset}-c(\lambda)_{uncorr}-\Delt
 where $c(\lambda)_{m\_discontinuity}$ is the measured attenuation not corrected for the inherent discontinuity,  $c(\lambda)_{offset}$ is the attenuation offset from the device file, $c(\lambda)_{uncorr}$ is the uncorrected attenuation from Equation 3c, and $\Delta T_c$ is the linearly interpolated internal temperature correction. 
 
 
-#### Equation 5c - Measured Attenuation, Corrected for Spectra Discontinuity
+#### Equation 5c - Measured Attenuation, Corrected for Spectra Discontinuity Using Second Half Shift Method
 $$
 c(\lambda)_{\text{m}} = c(\lambda)_{\text{m_discontinuity}} + \mathrm{offset}_d
 \left\{

@@ -1,4 +1,6 @@
 # Recommended Naming Conventions
+The tables below provide recommended names that follow ac-s documentation and also follow the Climate and Forecast Guidelines to Standard Names.
+
 
 [ArrayLike](https://numpy.org/doc/stable/reference/typing.html) indicates that the variable can be represented as a 1-dimensional (1xN) list, tuple, or numpy array.
 

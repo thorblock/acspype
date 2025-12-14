@@ -1,8 +1,7 @@
 import numpy as np
 import xarray as xr
 
-from acspype.dev import ACSDev
-from acspype.tscor import ACSTSCor
+from acspype import ACSDev, ACSTSCor
 import acspype.processing as acsproc
 
 TEST_FILEPATH = '../dev_tools/test_files/TEST_SHIMADA_202405.nc'
@@ -17,7 +16,6 @@ def test():
 
     # Compute Temperatures from ACS Thermistors
     acs['internal_temperature'] = acsproc.compute_internal_temperature(acs.raw_internal_temperature)
-    acs['external_temperature'] = acsproc.compute_external_temperature(acs.raw_external_temperature)
 
     # Compute Uncorrected Absorption and Attenuation
     acs['a_uncorrected'] = acsproc.compute_uncorrected(acs.a_signal, acs.a_reference, dev.path_length)
@@ -25,7 +23,7 @@ def test():
 
     # Compute Measured Absorption and Attenuation
     acs['a_m'] = acsproc.compute_measured(acs.a_uncorrected, acs.internal_temperature, dev.a_offset, dev.func_a_delta_t)
-    acs['c_m'] = acsproc.compute_measured(acs.c_uncorrected, acs.external_temperature, dev.c_offset, dev.func_c_delta_t)
+    acs['c_m'] = acsproc.compute_measured(acs.c_uncorrected, acs.internal_temperature, dev.c_offset, dev.func_c_delta_t)
 
     # Discontinuity Correction
     discontinuity_index = acsproc.find_discontinuity_index(acs.a_wavelength, acs.c_wavelength)
