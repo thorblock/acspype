@@ -7,7 +7,7 @@ import time
 import serial
 import serial.tools.list_ports
 
-from acspype.core import PACKET_REGISTRATION
+PACKET_REGISTRATION = b"\xff\x00\xff\x00"  # Start of every ACS packet.
 
 
 def list_available_ports() -> list:

@@ -650,7 +650,7 @@ def baseline_plus_scattering_correction(a_mts: xr.DataArray,
     :return: Baseline plus scattering corrected absorption coefficient.
     """
 
-    true_a_715 = 0.212 * np.pow(a_mts_715, 1.135)  # Equation 5 from Rottgers et al. (2013)
+    true_a_715 = 0.212 * np.power(a_mts_715, 1.135)  # Equation 5 from Rottgers et al. (2013)
     scatcorr = a_mts - (a_mts_715 - true_a_715)  # Equation 3 from Rottgers et al. (2013)
 
     if isinstance(scatcorr, xr.DataArray):  # Assign attributes if output is an xarray.DataArray.
@@ -683,7 +683,7 @@ def proportional_plus_scattering_correction(a_mts: xr.DataArray,
     :return: Proportional plus scattering corrected absorption coefficient.
     """
 
-    true_a_715 = 0.212 * np.pow(a_mts_715, 1.135)  # EQ5 from Rottgers et al. (2013)
+    true_a_715 = 0.212 * np.power(a_mts_715, 1.135)  # EQ5 from Rottgers et al. (2013)
     scatcorr = a_mts - (a_mts_715 - true_a_715) * (
             ((1 / e_c) * c_mts - a_mts) / ((1 / e_c) * c_mts_715 - true_a_715))  # EQ4
 

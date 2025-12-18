@@ -38,7 +38,7 @@ def main():
         }
 
     filename = 'ts4cor.py'
-    filepath = f'../../src/acspype/{filename}'
+    filepath = f'../../acspype/{filename}'
     with open(filepath, 'w') as f:
         f.write('"""\nThis file was automatically generated from the TS4.cor file that accompanies '
                 'all ACS sensors \nusing ts4cor_py_conversion.py. ')

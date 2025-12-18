@@ -51,7 +51,7 @@ def main():
 
 
     filename = 'ts4cor_sigma.py'
-    filepath = f'../../src/acspype/{filename}'
+    filepath = f'../../acspype/{filename}'
     with open(filepath, 'w') as f:
         f.write('"""\nThis file was automatically generated with the standard deviations found in Table 1 of\n'
                 'Sullivan et al. 2006. (10.1364/AO.45.005294)\n')

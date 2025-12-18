@@ -22,6 +22,12 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     :return: A reformatted and renamed OOI OPTAA dataset.
     """
 
+    # Old datasets don't have qartod flags, but newer ones do. So remove qartod vars since we can rerun qaqc later.
+    ds = ds.drop_vars([dv for dv in ds.data_vars if 'qartod' in dv], errors = 'ignore')
+
+    # Remove vars 99.9999% of users won't care about.
+    ds = ds.drop_vars(['checksum','meter_type','packet_type','record_length','serial_number'], errors = 'ignore')
+
     # Rename Wavelength dimensions
     ds = ds.rename({'wavelength_a': 'a_wavelength', 'wavelength_c': 'c_wavelength'})
     a_wvl = np.unique(ds.a_wavelength)

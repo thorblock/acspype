@@ -2,8 +2,9 @@
 
 from math import nan, sqrt
 
-import uncertainties
 from numpy.typing import NDArray
+import uncertainties
+import xarray as xr
 
 NUM_PAT = r"[+-]?[0-9]*[.]?[0-9]+"  # REGEX for any number, float or int, positive or negative.
 
@@ -53,10 +54,16 @@ class SPECS:
         UNC: float = nan
 
 
-def is_uncertainties_object(values: NDArray, max_checks: int = 5) -> bool:
-    if isinstance(values, uncertainties.core.Variable):
-        return True
-    elif isinstance(values, uncertainties.unumpy.core.matrix):
+def is_uncertainties(values: NDArray, max_checks: int = 5) -> bool:
+    """
+    Check if an object might be from the uncertainties package.
+    :param values: The input to check.
+    :param max_checks: The number of times to check in case the object is a nested NDArray.
+    :return: A boolean indicating whether or not the object is from the uncertainties package.
+    """
+    if isinstance(values, xr.DataArray):
+        values = values.values
+    if isinstance(values, uncertainties.core.Variable) or isinstance(values, uncertainties.unumpy.core.matrix):
         return True
     else:
         for i in range(max_checks):
