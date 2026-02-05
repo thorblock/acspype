@@ -38,7 +38,7 @@ extensions = [
     'm2r2',  # m2r2 needs to be before myst_nb
     'myst_nb', # Jupyter notebook support, should also cover markdown
     'myst_parser',
-    'sphinx.ext.mathjax'
+ #   'sphinx.ext.mathjax'
 ]
 
 nb_execution_mode = 'off' # Disable execution of code cells in notebooks
