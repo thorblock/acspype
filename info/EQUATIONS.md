@@ -1,8 +1,10 @@
 
-## Absorption, Scattering, and Attenuation
+## Light Absorption, Scattering, and Attenuation
 #### Equation 1
+
+Generally, the total attenuation (loss) of light is the result of the total absorption and total scattering of light by seawater and its contents.
 $$a+b=c$$
-where $a$ is the absorption coefficient, $b$ is the scattering coefficient, and $c$ is the attenuation coefficient.
+where $a$ is the absorption coefficient, $b$ is the scattering coefficient, and $c$ is the attenuation coefficient, all with units of inverse meters ($m^{-1}$).
 
 
 ## Absorption Processing
@@ -16,7 +18,7 @@ a(\lambda)_{\mathrm{uncorr}} = \frac{1}{x} \cdot \ln\!\left(
 \frac{a(\lambda)_{\mathrm{signal}}}{a(\lambda)_{\mathrm{reference}}}
 \right)
 $$
-where $a(\lambda)_{\mathrm{uncorr}}$ is the uncorrected absorption, x is the path length, $a(\lambda)_{\mathrm{signal}}$ is raw signal counts for absorption, and $a(\lambda)_{\mathrm{reference}}$ is raw reference counts for absorption.
+where $a(\lambda)_{\mathrm{uncorr}}$ is the uncorrected absorption, x is the path length in meters (typically 0.25m), $a(\lambda)_{\mathrm{signal}}$ is raw signal counts for absorption, and $a(\lambda)_{\mathrm{reference}}$ is raw reference counts for absorption.
 
 #### Equation 4a - Measured Absorption, Corrected for Internal Temperature, Uncorrected for Spectra Discontinuity
 $$a(\lambda)_{m\_discontinuity} =  a(\lambda)_{offset}-a(\lambda)_{uncorr}-\Delta T_a$$
@@ -82,7 +84,7 @@ where $c(\lambda)_{\mathrm{uncorr}}$ is the uncorrected attenuation, x is the pa
 
 
 #### Equation 4c - Measured Attenuation, Corrected for Internal Temperature, Uncorrected for Spectra Discontinuity
-$$c(\lambda)_{m\_discontinuity} =  c(\lambda)_{offset}-c(\lambda)_{uncorr}-\Delta T_a$$
+$$c(\lambda)_{m\_discontinuity} =  c(\lambda)_{offset}-c(\lambda)_{uncorr}-\Delta T_c$$
 where $c(\lambda)_{m\_discontinuity}$ is the measured attenuation not corrected for the inherent discontinuity,  $c(\lambda)_{offset}$ is the attenuation offset from the device file, $c(\lambda)_{uncorr}$ is the uncorrected attenuation from Equation 3c, and $\Delta T_c$ is the linearly interpolated internal temperature correction. 
 
 
