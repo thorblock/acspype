@@ -2,7 +2,9 @@
 #### Equation 1
 
 Generally, the total attenuation (loss) of light is the result of the total absorption and total scattering of light by seawater and its contents.
-$$a+b=c$$
+
+$a+b=c$
+
 where $a$ is the absorption coefficient, $b$ is the scattering coefficient, and $c$ is the attenuation coefficient, all with units of inverse meters ($m^{-1}$).
 
 
