@@ -1,5 +1,4 @@
-
-## Light Absorption, Scattering, and Attenuation
+# Processing Equations
 #### Equation 1
 
 Generally, the total attenuation (loss) of light is the result of the total absorption and total scattering of light by seawater and its contents.
