@@ -3,15 +3,15 @@
 
 Generally, the total attenuation (loss) of light is the result of the total absorption and total scattering of light by seawater and its contents.
 
-$a+b=c$
+$$a+b=c$$
 
 where $a$ is the absorption coefficient, $b$ is the scattering coefficient, and $c$ is the attenuation coefficient, all with units of inverse meters ($m^{-1}$).
 
 
 ## Absorption Processing
 #### Equation 2a - Total Absorption Constituents
-$$a_t = a_w + \Sigma a_p + \Sigma a_g$$
-where $a_t$ is the total absorption of seawater and its constituents, $a_w$ is the absorption by water, $\Sigma a_p$ is the absorption by all particulates, and $\Sigma a_g$ is the absorption by all gelbstoff (dissolved) constituents.
+$$a_t = a_w + a_p + a_g$$
+where $a_t$ is the total absorption of seawater and its constituents, $a_w$ is the absorption by water, $a_p$ is the absorption by all particulates, and $a_g$ is the absorption by all gelbstoff (dissolved) constituents.
 
 #### Equation 3a - Uncorrected Absorption from Raw Counts
 $$
@@ -69,11 +69,10 @@ $$
 where $a(\lambda)_{\text{mts\_proportional}}$ is the absorption corrected for scattering using the proportional method, $\lambda_{ref}$ is the absorption/attenuation at the reference wavelength, typically 715nm.
 
 
-
 ## Attenuation Processing
 #### Equation 2c - Total Attenuation Constituents
-$$c_t = c_w + \Sigma c_p + \Sigma c_g$$
-where $c_t$ is the total attenuation of seawater and its constituents, $c_w$ is the attenuation by water, $\Sigma c_p$ is the attenuation by all particulates, and $\Sigma c_g$ is the attenuation by all gelbstoff (dissolved) constituents.
+$$c_t = c_w + c_p + c_g$$
+where $c_t$ is the total attenuation of seawater and its constituents, $c_w$ is the attenuation by water, $c_p$ is the attenuation by all particulates, and $c_g$ is the attenuation by all gelbstoff (dissolved) constituents.
 
 #### Equation 3c - Uncorrected Attenuation From Raw Counts
 $$

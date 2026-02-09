@@ -3,12 +3,10 @@ This module contains functions that are beneficial to use alongside acspype, but
 """
 
 import time
-
 import serial
 import serial.tools.list_ports
 
-PACKET_REGISTRATION = b"\xff\x00\xff\x00"  # Start of every ACS packet.
-
+from acspype.core import PACKET_REGISTRATION
 
 def list_available_ports() -> list:
     """

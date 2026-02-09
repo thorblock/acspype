@@ -1,7 +1,6 @@
 """
 This module contains functions and classes for parsing and accessing data from ACS .dev files.
-Currently, only
-structure version 3 is supported.
+Currently, only structure version 3 is supported.
 """
 
 from datetime import datetime

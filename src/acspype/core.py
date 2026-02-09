@@ -1,7 +1,6 @@
 """This module contains core constants and functions used across acspype."""
 
 from math import nan, sqrt
-
 from numpy.typing import NDArray
 import uncertainties
 import xarray as xr

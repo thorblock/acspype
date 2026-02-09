@@ -161,10 +161,8 @@ cython_debug/
 
 # Custom
 uv.lock
-figures/
-ooi_data/
-_scratch/
-shimada_202405_subset.nc
+figures/  # Used for creating manuscript figures.
+ooi_data/  # Used to store data from OOI download examples.
 
 *.patch
 

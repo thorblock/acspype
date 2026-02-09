@@ -1,3 +1,8 @@
+"""
+This module contains functions that facilitate the estimation of other data products through the scientific work of
+others.
+"""
+
 import xarray as xr
 
 

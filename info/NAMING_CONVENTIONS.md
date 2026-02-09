@@ -1,12 +1,11 @@
 # Recommended Naming Conventions
-The tables below provide recommended names that follow ac-s documentation and also follow the Climate and Forecast Guidelines to Standard Names.
-
+The tables below provide recommended names that follow ac-s documentation.
 
 [ArrayLike](https://numpy.org/doc/stable/reference/typing.html) indicates that the variable can be represented as a 1-dimensional (1xN) list, tuple, or numpy array.
 
 [NDArray](https://numpy.org/doc/stable/reference/typing.html) indicates that the variable can be represented as a 2-dimensional (MxN) list, tuple, or numpy array. 
-For output data, M is usually time and N is equivalent in size to the number of output wavelength bins. 
-For the device file, M is usually the number of temperature bins and N is equivalent in size to the number of wavelength bins.
+For data from the ac-s, M is time and N is equivalent in size to the number of wavelength bins. 
+For the device file, M is the number of temperature bins and N is equivalent in size to the number of wavelength bins.
 
 
 ## ACS Device File Variables and Functions

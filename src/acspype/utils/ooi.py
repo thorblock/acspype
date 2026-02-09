@@ -22,11 +22,15 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     :return: A reformatted and renamed OOI OPTAA dataset.
     """
 
-    # Old datasets don't have qartod flags, but newer ones do. So remove qartod vars since we can rerun qaqc later.
+    # Old datasets don't have qartod flags, but newer ones do. ACS data are too finicky to trust the qartod test results implicitly.
     ds = ds.drop_vars([dv for dv in ds.data_vars if 'qartod' in dv], errors = 'ignore')
 
     # Remove vars 99.9999% of users won't care about.
-    ds = ds.drop_vars(['checksum','meter_type','packet_type','record_length','serial_number'], errors = 'ignore')
+    vars_to_drop = ['driver_timestamp', 'uuid', 'provenance_uuid', 'internal_timestamp', 'ingestion_timestamp',
+                    'profiler_timestamp', 'port_timestamp', 'preferred_timestamp', 'suspect_timestamp', 'raw_pressure',
+                    'optical_absorption', 'beam_attenuation','checksum',
+                    'meter_type','packet_type','record_length','serial_number','uuid']
+    ds = ds.drop_vars(vars_to_drop, errors='ignore')
 
     # Rename Wavelength dimensions
     ds = ds.rename({'wavelength_a': 'a_wavelength', 'wavelength_c': 'c_wavelength'})
@@ -39,7 +43,7 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     ds = ds.drop_vars(['a_wavelength', 'c_wavelength', 'num_wavelengths'], errors='ignore')
 
     # Pull out lat/lon.
-    # No OOI OPTAA dataset is currently mobile, so assign a static latitude and longitude to the entire dataset.
+    # No OOI OPTAA dataset is currently "mobile", so assign a static latitude and longitude to the entire dataset.
     lat = np.unique(ds.lat)
     if len(lat) == 1:
         lat = lat[0]
@@ -63,6 +67,7 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
     # Reformat to use time instead of obs.
     ds = ds.swap_dims({'obs': 'time'})
     ds = ds.drop_vars(['obs'], errors='ignore')
+    ds = ds.drop_duplicates(dim = 'time', keep = 'first')
 
     # Create a new dataset with the appropriate dimensions.
     nds = xr.Dataset()
@@ -75,7 +80,7 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
         else:
             nds[var] = (['time'], ds[var].data)
 
-    # Rename variables to match _acspype.
+    # Rename variables to match acspype recommended naming conventions.
     mapper = {'external_temp_raw': 'raw_external_temperature',
               'c_signal_counts': 'c_signal',
               'a_signal_counts': 'a_signal',
@@ -111,9 +116,8 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
         except:
             continue
 
-    qvars = [v for v in ds.data_vars if 'qartod' in v]
-    for qvar in qvars:
-        nds[qvar] = ds[qvar]
+    nds = nds.drop_vars(['uuid','provenance_uuid','raw_pressure'], errors = 'ignore')
+
 
     # Update elapsed_time if it arrives with units of seconds.
     if nds.elapsed_time.attrs['units'] == 's':
@@ -132,12 +136,6 @@ def reformat_ooi_optaa(ds: xr.Dataset) -> xr.Dataset:
         else:
             nds.attrs[attr] = ds.attrs[attr]
     nds.attrs['number_of_output_wavelengths'] = nwvls
-
-    # Drop confusing variables or variables we will reprocess to.
-    vars_to_drop = ['driver_timestamp', 'uuid', 'provenance_uuid', 'internal_timestamp', 'ingestion_timestamp',
-                    'profiler_timestamp', 'port_timestamp', 'preferred_timestamp', 'suspect_timestamp', 'raw_pressure',
-                    'optical_absorption', 'beam_attenuation']
-    nds = nds.drop_vars(vars_to_drop, errors='ignore')
 
     # Reorder variables alphabetically for convenience.
     nds = nds[sorted(nds.data_vars)]
