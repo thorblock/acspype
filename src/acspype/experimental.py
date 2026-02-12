@@ -51,7 +51,6 @@ def estimate_chl(a_p_650: xr.DataArray,
     chl_alh = alh / alh_coeff  # EQ 3 in Roesler and Barnard 2013
 
     if isinstance(chl_alh, xr.DataArray):
-        chl_alh.attrs['ancillary_variables'] = a_p_650.name
         chl_alh.attrs['alh_coeff'] = alh_coeff
         chl_alh.attrs['long_name'] = 'Chlorophyll-a Concentration from Absorption Line Height'
         chl_alh.attrs['units'] = 'mg/m^3'
