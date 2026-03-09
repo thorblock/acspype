@@ -162,5 +162,6 @@ cython_debug/
 # Custom
 uv.lock
 figures/  # Used for creating manuscript figures.
-ooi_data # Used to store data from OOI download examples.
-
+examples/ooi_data/ # Used to store data from OOI download examples.
+_scratch/
+deployment*.nc

@@ -10,6 +10,9 @@ import tomllib
 import os
 import sys # Path manipulation
 
+sys.path.insert(0, os.path.abspath('../../src')) # Adjust the path to point to the root of your project
+
+
 # Read information from pyproject.toml
 with open("../../pyproject.toml", "rb") as _f:
     _config = tomllib.load(_f)
@@ -28,8 +31,6 @@ license = proj_license
 author = proj_authors
 release = proj_release
 
-
-sys.path.insert(0, os.path.abspath('../..')) # Adjust the path to point to the root of your project
 
 extensions = [
     'sphinx.ext.autodoc', # Automatically generate documentation from docstrings

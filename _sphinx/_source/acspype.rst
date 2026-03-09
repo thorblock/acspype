@@ -1,7 +1,7 @@
 acspype code
 ===============
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
 
 acspype.stream module
 ---------------------
